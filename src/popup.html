@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Translator for Billingo</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <header class="bt-header">
+    <img src="../icons/icon48.png" alt="" class="bt-logo">
+    <div class="bt-title">
+      <span class="bt-title-1">Translator</span>
+      <span class="bt-title-2">for Billingo</span>
+    </div>
+  </header>
+
+  <section class="bt-langs" role="radiogroup" aria-label="Translation language">
+    <button type="button" class="bt-lang" role="radio" data-lang="hu" aria-checked="false" tabindex="-1">
+      <span class="bt-check" aria-hidden="true">✓</span>
+      <span class="bt-lang-label">HU</span>
+      <span class="bt-lang-hint">(off)</span>
+    </button>
+    <button type="button" class="bt-lang" role="radio" data-lang="en" aria-checked="false" tabindex="-1">
+      <span class="bt-check" aria-hidden="true">✓</span>
+      <span class="bt-lang-label">EN</span>
+    </button>
+    <button type="button" class="bt-lang" role="radio" data-lang="fr" aria-checked="false" tabindex="-1">
+      <span class="bt-check" aria-hidden="true">✓</span>
+      <span class="bt-lang-label">Français</span>
+    </button>
+  </section>
+
+  <section class="bt-coverage">
+    <div class="bt-coverage-row">
+      <span class="bt-coverage-label">Coverage</span>
+      <span class="bt-coverage-pct" id="bt-coverage-pct">—</span>
+    </div>
+    <div class="bt-bar" aria-hidden="true">
+      <div class="bt-bar-fill" id="bt-bar-fill" style="width:0%"></div>
+    </div>
+    <div class="bt-coverage-sub" id="bt-coverage-sub">Open a Billingo tab to translate.</div>
+  </section>
+
+  <footer class="bt-footer">v1.0 · Unofficial extension</footer>
+
+  <script src="popup.js"></script>
+</body>
+</html>
