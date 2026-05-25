@@ -1,0 +1,122 @@
+[
+  {
+    "prefix": "/n/external-invoice-import",
+    "shard": "documents"
+  },
+  {
+    "prefix": "/n/organization-setting",
+    "shard": "settings"
+  },
+  {
+    "prefix": "/n/accountant-affiliate",
+    "shard": "subscription"
+  },
+  {
+    "prefix": "/n/organization-wizard",
+    "shard": "organizationwizard"
+  },
+  {
+    "prefix": "/n/organization-place",
+    "shard": "inventory"
+  },
+  {
+    "prefix": "/n/nav-online-szamla",
+    "shard": "settings"
+  },
+  {
+    "prefix": "/n/campaign-manager",
+    "shard": "marketing"
+  },
+  {
+    "prefix": "/n/user-invitation",
+    "shard": "users"
+  },
+  {
+    "prefix": "/n/tender-monitor",
+    "shard": "marketing"
+  },
+  {
+    "prefix": "/n/phone-validate",
+    "shard": "phonevalidate"
+  },
+  {
+    "prefix": "/n/bank-account",
+    "shard": "bank"
+  },
+  {
+    "prefix": "/n/subscription",
+    "shard": "subscription"
+  },
+  {
+    "prefix": "/n/billingo-pay",
+    "shard": "billingopay"
+  },
+  {
+    "prefix": "/n/organization",
+    "shard": "organization"
+  },
+  {
+    "prefix": "/n/marketplace",
+    "shard": "marketplace"
+  },
+  {
+    "prefix": "/n/dashboard",
+    "shard": "dashboard"
+  },
+  {
+    "prefix": "/n/inventory",
+    "shard": "inventory"
+  },
+  {
+    "prefix": "/n/affiliate",
+    "shard": "subscription"
+  },
+  {
+    "prefix": "/n/document",
+    "shard": "documents"
+  },
+  {
+    "prefix": "/n/spending",
+    "shard": "spending"
+  },
+  {
+    "prefix": "/n/flat-tax",
+    "shard": "tax"
+  },
+  {
+    "prefix": "/n/partner",
+    "shard": "partners"
+  },
+  {
+    "prefix": "/n/product",
+    "shard": "products"
+  },
+  {
+    "prefix": "/n/ceginfo",
+    "shard": "ceginfo"
+  },
+  {
+    "prefix": "/n/user",
+    "shard": "users"
+  },
+  {
+    "prefix": "/n/kata",
+    "shard": "tax"
+  },
+  {
+    "prefix": "/n/bob",
+    "shard": "bank"
+  },
+  {
+    "prefix": "/n/api",
+    "shard": "api"
+  },
+  {
+    "prefix": "/n/kyc",
+    "shard": "kyc"
+  },
+  {
+    "prefix": "/n/ubo",
+    "shard": "ubo"
+  }
+]
