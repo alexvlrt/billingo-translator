@@ -1,8 +1,9 @@
 # Dependencies
 node_modules/
 
-# Internal specs and implementation plans (private working dir)
+# Internal specs, plans, and store submission workflow (private)
 docs/
+store/
 
 # Captured / generated build pipeline data (regeneratable; not source code)
 tools/capture/
