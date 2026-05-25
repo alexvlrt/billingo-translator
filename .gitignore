@@ -1,0 +1,25 @@
+# Dependencies
+node_modules/
+
+# Internal specs and implementation plans (private working dir)
+docs/
+
+# Captured / generated build pipeline data (regeneratable; not source code)
+tools/capture/
+tools/bundle/chunks/
+tools/bundle/translations/
+tools/bundle/extracted.json
+tools/bundle/manifest.json
+tools/bundle/new-zones.json
+tools/all-chunk-strings.txt
+tools/all-strings.txt
+tools/hu-strings.txt
+tools/rendered-strings.txt
+tools/crawl-log.txt
+tools/diagnostic-output.json
+
+# Editor / OS
+.idea/
+.vscode/
+.DS_Store
+*.log

@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <!-- Translator for Billingo — original mark (speech bubble + accented "Á").
+       Glyph traced from DejaVu Sans Bold, so this file is font-independent. -->
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#818CF8"/>
+      <stop offset="1" stop-color="#4F46E5"/>
+    </linearGradient>
+  </defs>
+  <rect x="0" y="0" width="128" height="128" rx="28" fill="url(#bg)"/>
+  <g fill="#FFFFFF">
+    <rect x="20" y="22" width="88" height="64" rx="16"/>
+    <path d="M44 82 L44 105 L67 86 Z"/>
+  </g>
+  <path fill="#4F46E5" d="M74.43 79L71.95 71.83L56.08 71.83L53.57 79L43.37 79L57.95 39.63L70.05 39.63L84.63 79L74.43 79M64.01 48.86L58.61 64.52L69.39 64.52L64.01 48.86M59.48 35.89L64.70 28.93L72.16 28.93L64.65 35.89Z"/>
+</svg>
