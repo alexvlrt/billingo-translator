@@ -43,9 +43,9 @@ that publishes onto `globalThis.BillingoTranslator`. **Never add `import`/`expor
 
 | File | Responsibility |
 | --- | --- |
-| `src/translator.js` | Pure `dict[text.trim()]` lookup + hit/miss stats. No DOM, no `chrome.*`. |
+| `src/translator.js` | Layered lookup (exact → whitespace → punctuation → patterns) + hit/miss stats. No DOM, no `chrome.*`. |
 | `src/dom-walker.js` | TreeWalker over text nodes + translatable attributes; remembers originals; `MutationObserver`. |
-| `src/shard-loader.js` | Route → zone → lazy `fetch(dict/<lang>/<zone>.json)`, merged into one object, load-and-keep. |
+| `src/shard-loader.js` | Route → zone → lazy `fetch(dict/<lang>/<zone>.json)`, merged into one object, load-and-keep. `ensureAll()` sweeps every zone. |
 | `src/spa-router.js` | Detects SPA navigation (polling is the reliable path — see below). |
 | `src/content.js` | Wiring, storage, popup messaging, monolithic-dict fallback. |
 | `src/popup.{html,js,css}` | Language radiogroup + live coverage %. |
@@ -70,7 +70,20 @@ These exist because a naive implementation froze the real Billingo app. Changing
   switching languages never trips it.
 - **Flood circuit-breaker** (`FLOOD_THRESHOLD` records/s → disconnect, cooldown, resettle).
 - **Empty dictionary value means miss**, never blank output — an untranslated key
-  (`""`) must leave the Hungarian text visible.
+  (`""`) must leave the Hungarian text visible. This holds at every lookup layer.
+
+### Lookup layers (`src/translator.js`)
+
+Exact match is layer 1; everything after it exists because Billingo renders text
+the dictionary cannot hold verbatim (indentation, `Adószám` vs `Adószám:`,
+`:type` substitution, `3 db` vs `17 db`). Layers 1 and 3 read the dictionary
+live; layers 2 and 4 use a derived index built lazily on the first miss.
+
+**`translate.refresh()` must be called whenever the shard loader merges a new
+zone**, or the pattern index goes stale. `src/content.js` does this after
+`ensureZoneForRoute` (only when it returned `true`) and after `ensureAll`.
+Rebuilding is a full dictionary pass (~30 ms over ~8 k keys), so do not call it
+per route change unconditionally.
 
 ### Other runtime facts
 
@@ -141,15 +154,19 @@ delete/confirm. This constraint is documented at the top of
 
 ## Known gaps (do not "rediscover" these)
 
-- `dict/_index.json` maps `/n/organization` → shard `organization`, but no
-  `dict/{en,fr}/organization.json` exists; the loader 404s and warns, and those routes
-  fall back to `_common` only.
-- Lookup is **exact-match**, so keys holding Laravel-style placeholders (`:type`,
-  `:due_days` — ~105 keys) can never match rendered text.
-- `README.md` documents a popup **Dev mode / Export misses**; it was removed in v1.0.
-  `content.js` still tracks `uniqueMisses` and answers `getStats`, but nothing surfaces
-  them.
-- `SKIP_TAGS` rejection prunes the element itself, so a `<textarea placeholder="…">`
-  is never translated.
 - `/auth/*` (login, registration, password reset) has no zone and is explicitly
-  excluded from bundle extraction — effectively untranslated beyond `_common`.
+  excluded from bundle extraction (`EXCLUDE` in `tools/extract-bundle.js`) —
+  effectively untranslated beyond `_common`.
+- `content.js` tracks `uniqueMisses` and answers `getStats`, but nothing surfaces
+  them: the popup shows only a percentage. There is no way for a user to export
+  the strings they saw untranslated, so real-world misses are never harvested.
+- `makeHuFilter` keeps a captured string only if it carries a Hungarian diacritic
+  or is already a key, so **accent-less Hungarian is invisible to fresh DOM
+  captures** (555 shipped keys have no diacritic; they survived via the bundle's
+  i18n catalog, not the DOM sweep).
+- Interaction-gated text — validation errors, toasts, confirm dialogs — is out of
+  reach of the crawlers, which are read-only against a production NAV-connected
+  account. A dedicated trial account would unlock this class.
+- ~167 keys are extraction garbage (HTML attribute residue such as
+  `" class="font-weight-bold" style="…">Megrendelések`). They can never match and
+  they weigh on `_common` (596 KB), which is parsed on every page.

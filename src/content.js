@@ -39,6 +39,29 @@
   // every node from its remembered original text — i.e. live "untranslate".
   const restoreTranslator = () => null;
 
+  const scheduleIdle =
+    typeof requestIdleCallback !== 'undefined'
+      ? (cb) => requestIdleCallback(cb, { timeout: 3000 })
+      : (cb) => setTimeout(cb, 1000);
+
+  // Once the current view is translated and the page has gone quiet, pull in the
+  // remaining zones. A single screen shows text from several of them (a partner
+  // modal inside the invoice editor, a subscription banner anywhere), which the
+  // route's own shard alone cannot cover. Deferred so it never delays first paint.
+  function prefetchAllZones(seq) {
+    scheduleIdle(() => {
+      if (seq !== applySeq || !loader || !currentTranslate) return;
+      loader
+        .ensureAll()
+        .then((added) => {
+          if (!added || seq !== applySeq || !currentTranslate) return;
+          currentTranslate.refresh(); // new keys → rebuild the fallback index
+          walkAndTranslate(document.body, currentTranslate, currentStats);
+        })
+        .catch((err) => console.warn('[bt] zone prefetch failed:', err.message));
+    });
+  }
+
   async function applyLang(lang) {
     const seq = ++applySeq;
     if (currentObserver) {
@@ -83,6 +106,7 @@
     // walkAndTranslate is async (time-sliced) — the observer is idempotent
     // (no-op-by-equality) so it and the deferred walk slices both converge safely.
     currentObserver = installObserver(document.body, translateFn, currentStats);
+    prefetchAllZones(seq);
   }
 
   // Initial load: read storage, apply.
@@ -100,7 +124,10 @@
       onRouteChange(async (path) => {
         if (currentLang === 'hu' || !loader) return;
         try {
-          await loader.ensureZoneForRoute(path); // load-and-keep: no-op if already loaded
+          // load-and-keep: no-op if already loaded. Only rebuild the fallback
+          // index when this actually merged new keys — it is a full dict pass.
+          const added = await loader.ensureZoneForRoute(path);
+          if (added && currentTranslate) currentTranslate.refresh();
         } catch (e) { console.warn('[bt] route zone load failed:', e.message); }
         // Always re-walk the new view, exactly like a language switch does — the
         // walk is idempotent (no-op-by-equality) and time-sliced, so this is cheap

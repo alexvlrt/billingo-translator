@@ -43,6 +43,15 @@
         const zone = zoneForRoute(pathname);
         return zone ? load(zone) : Promise.resolve(false);
       },
+      // Every zone, regardless of route. A single page pulls text from several
+      // zones (a partner modal inside the invoice editor, an upsell banner on
+      // any screen), so the route's own shard is never the whole story. Called
+      // once the page is idle; resolves true when it merged something new.
+      ensureAll: () => {
+        const zones = new Set(['_common']);
+        for (const { shard } of index) zones.add(shard);
+        return Promise.all([...zones].map(load)).then((added) => added.some(Boolean));
+      },
       getMerged: () => merged,
     };
   }

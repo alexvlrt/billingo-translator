@@ -7,7 +7,7 @@
 **Translate the Hungarian [Billingo](https://app.billingo.hu) invoicing UI into English or French — live, in place, no reload.**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-4F46E5.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-1.0.0-4F46E5.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-1.1.0-4F46E5.svg)](CHANGELOG.md)
 [![Manifest V3](https://img.shields.io/badge/Manifest-V3-4F46E5.svg)](manifest.json)
 [![Chrome + Firefox](https://img.shields.io/badge/Chrome%20%2B%20Firefox-supported-4F46E5.svg)](#install)
 
@@ -26,9 +26,9 @@ Billingo is a great Hungarian invoicing tool — but its interface is **Hungaria
 
 - 🌍 **Live translation** of `app.billingo.hu` into **English** or **French**.
 - ⚡ **Instant switching** — change language from the popup, no page reload. Original Hungarian text is remembered, so you can switch back to **Magyar (off)** at any time.
-- 🧩 **Route-aware dictionary** — the dictionary is sharded per app section and only the shard for the current page is loaded, keeping things fast.
+- 🧩 **Route-aware dictionary** — the dictionary is sharded per app section; the shard for the current page loads first, then the rest are pulled in once the page is idle so modals and banners from other sections are covered too.
 - 🔁 **SPA-aware** — follows Billingo's in-app navigation and dynamically rendered content (via a `MutationObserver`).
-- 🩺 **Dev mode** — collect untranslated strings as you browse and export them to extend coverage.
+- 🧠 **Beyond exact matches** — normalises whitespace, tolerates trailing label punctuation, and fills templated messages (`:type letöltése` → `Télécharger la facture`, `17 db` → `17 pièces`), so dynamic text is translated too.
 - ✍️ **Curated, documented translations** — non-obvious fiscal/legal terms are translated deliberately, with rationale recorded in [`TRANSLATIONS.md`](TRANSLATIONS.md).
 - 🔒 **Private by design** — no analytics, no servers, no data leaves your browser. See [`PRIVACY.md`](PRIVACY.md).
 - 🧱 **Manifest V3**, works on **Chrome / Edge** and **Firefox**.
@@ -68,7 +68,6 @@ Then open [Billingo](https://app.billingo.hu), click the toolbar icon, and pick 
 
 - Click the toolbar icon → choose **Magyar (off)**, **English**, or **Français**.
 - The popup shows live **coverage** for the current page.
-- Enable **Dev mode** to collect strings the dictionary doesn't cover yet (see below).
 
 ## How it works
 
@@ -85,13 +84,12 @@ The extension is a content script that runs only on `https://app.billingo.hu/*`.
 
 ## Contributing translations
 
-Coverage grows by adding string pairs. The easiest workflow:
+Coverage grows by adding string pairs.
 
-1. In the popup, enable **Dev mode** and browse Billingo. Missing strings are collected (and logged to the console with a `[billingo-translator]` prefix).
-2. Click **Export misses** to get the list of untranslated Hungarian strings.
-3. Add each pair to the matching shard in **`dict/en/`** and **`dict/fr/`** (check `dict/_index.json` for the route → shard map).
-4. For any non-obvious choice (fiscal, legal, or ambiguous terms), add a short note to [`TRANSLATIONS.md`](TRANSLATIONS.md).
-5. Run the tests and open a pull request.
+1. Add the pair to **`dict/en.json`** and **`dict/fr.json`** — these are the source of truth. The per-zone files in `dict/en/` and `dict/fr/` are **generated**, so editing them directly is overwritten by the next build.
+2. Re-shard with `node tools/build-shards.js`.
+3. For any non-obvious choice (fiscal, legal, or ambiguous terms), add a short note to [`TRANSLATIONS.md`](TRANSLATIONS.md).
+4. Run the tests and open a pull request.
 
 Translation discussions and corrections are very welcome — [open an issue](https://github.com/alexvlrt/billingo-translator/issues).
 

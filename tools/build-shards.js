@@ -116,8 +116,12 @@ function main() {
   writeShards('en', shardsEn);
   writeShards('fr', shardsFr);
 
+  // A zone from tools/zones.js that collected no string has no shard file — keep
+  // it out of the index, otherwise the runtime loader fetches a 404 on every
+  // visit to that route.
+  const builtShards = new Set(Object.keys(shardsEn));
   fs.writeFileSync(path.join(ROOT, 'dict/_index.json'),
-    JSON.stringify(buildIndex(), null, 2) + '\n');
+    JSON.stringify(buildIndex().filter((e) => builtShards.has(e.shard)), null, 2) + '\n');
 
   function merge(shards) {
     const all = {};

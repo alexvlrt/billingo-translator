@@ -1,6 +1,6 @@
 {
   "name": "billingo-translator",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "type": "module",
   "private": true,
   "description": "Chrome extension that translates the Billingo UI to EN/FR via a static dictionary.",
