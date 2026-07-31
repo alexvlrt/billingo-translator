@@ -52,10 +52,6 @@
     "shard": "billingopay"
   },
   {
-    "prefix": "/n/organization",
-    "shard": "organization"
-  },
-  {
     "prefix": "/n/marketplace",
     "shard": "marketplace"
   },

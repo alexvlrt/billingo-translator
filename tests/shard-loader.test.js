@@ -55,6 +55,34 @@ test('concurrent ensureZoneForRoute fetches the shard once', async () => {
   assert.equal(calls, 1);
 });
 
+test('ensureAll loads every distinct zone plus _common, exactly once', async () => {
+  const BT = setup();
+  const fetched = [];
+  const fetchShard = async (lang, shard) => { fetched.push(shard); return shards[shard]; };
+  const loader = BT.createShardLoader({ index, fetchShard, lang: 'fr' });
+
+  assert.equal(await loader.ensureAll(), true);
+  assert.deepEqual(fetched.sort(), ['_common', 'bank', 'documents']); // 'bank' listed twice in index
+  assert.equal(loader.getMerged()['Számla'], 'Invoice');
+  assert.equal(loader.getMerged()['Bank'], 'Bank');
+
+  // load-and-keep: a second sweep merges nothing new and refetches nothing.
+  assert.equal(await loader.ensureAll(), false);
+  assert.equal(fetched.length, 3);
+});
+
+test('ensureAll keeps the zones it could load when one shard 404s', async () => {
+  const BT = setup();
+  const fetchShard = async (lang, shard) => {
+    if (shard === 'bank') throw new Error('404');
+    return shards[shard];
+  };
+  const loader = BT.createShardLoader({ index, fetchShard, lang: 'fr' });
+
+  assert.equal(await loader.ensureAll(), true);
+  assert.equal(loader.getMerged()['Számla'], 'Invoice');
+});
+
 test('fetch failure is swallowed (returns false, no throw)', async () => {
   const BT = setup();
   const fetchShard = async () => { throw new Error('network'); };

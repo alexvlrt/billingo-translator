@@ -13,8 +13,15 @@
 // busy SPAs.
 
 (function () {
-  const TRANSLATABLE_ATTRS = ['placeholder', 'title', 'aria-label', 'alt'];
-  const SKIP_TAGS = new Set(['SCRIPT', 'STYLE', 'NOSCRIPT', 'TEXTAREA']);
+  const TRANSLATABLE_ATTRS = [
+    'placeholder', 'title', 'aria-label', 'alt',
+    'aria-placeholder', 'aria-description', 'label',
+  ];
+  // A TEXTAREA's content is user data (invoice comments) and must never be
+  // touched, but its placeholder is UI chrome — so it is skipped for text and
+  // kept for attributes. SCRIPT/STYLE/NOSCRIPT are skipped for both.
+  const SKIP_TEXT_TAGS = new Set(['SCRIPT', 'STYLE', 'NOSCRIPT', 'TEXTAREA']);
+  const SKIP_ELEMENT_TAGS = new Set(['SCRIPT', 'STYLE', 'NOSCRIPT']);
   const BUTTON_INPUT_TYPES = new Set(['submit', 'button', 'reset']);
 
   const originalText = new WeakMap();   // text node → original HU value
@@ -55,14 +62,14 @@
   }
 
   // Collect translatable work items (text nodes + elements) under `root` into
-  // `items`. Both walkers prune SKIP_TAGS subtrees via FILTER_REJECT (symmetric),
-  // and volatile text nodes are skipped.
+  // `items`. Each walker prunes its own skip set via FILTER_REJECT, and volatile
+  // text nodes are skipped.
   function collectItems(root, doc, items) {
     const textWalker = doc.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
       acceptNode(node) {
         if (volatileNodes.has(node)) return NodeFilter.FILTER_REJECT;
         const parent = node.parentNode;
-        if (!parent || SKIP_TAGS.has(parent.nodeName)) return NodeFilter.FILTER_REJECT;
+        if (!parent || SKIP_TEXT_TAGS.has(parent.nodeName)) return NodeFilter.FILTER_REJECT;
         const trimmed = node.nodeValue && node.nodeValue.trim();
         return trimmed ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
       },
@@ -72,10 +79,10 @@
 
     const elementWalker = doc.createTreeWalker(root, NodeFilter.SHOW_ELEMENT, {
       acceptNode(el) {
-        return SKIP_TAGS.has(el.nodeName) ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT;
+        return SKIP_ELEMENT_TAGS.has(el.nodeName) ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT;
       },
     });
-    let el = root.nodeType === 1 && !SKIP_TAGS.has(root.nodeName) ? root : elementWalker.nextNode();
+    let el = root.nodeType === 1 && !SKIP_ELEMENT_TAGS.has(root.nodeName) ? root : elementWalker.nextNode();
     while (el) { items.push({ t: 'el', el }); el = elementWalker.nextNode(); }
   }
 
