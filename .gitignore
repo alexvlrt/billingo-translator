@@ -5,8 +5,12 @@ node_modules/
 docs/
 store/
 
+# Distributable packages — regenerate with `npm run package`
+dist/
+
 # Captured / generated build pipeline data (regeneratable; not source code)
 tools/capture/
+tools/analysis/
 tools/bundle/chunks/
 tools/bundle/translations/
 tools/bundle/extracted.json
