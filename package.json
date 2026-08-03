@@ -1,11 +1,13 @@
 {
   "name": "billingo-translator",
-  "version": "1.1.0",
+  "version": "1.0.0",
   "type": "module",
   "private": true,
   "description": "Chrome extension that translates the Billingo UI to EN/FR via a static dictionary.",
   "scripts": {
-    "test": "node --test --experimental-vm-modules tests/**/*.test.js"
+    "test": "node --test --experimental-vm-modules tests/*.test.js",
+    "package": "node scripts/package.mjs",
+    "lint:ext": "npx --yes web-ext@8 lint --source-dir dist/firefox --self-hosted"
   },
   "devDependencies": {
     "acorn": "^8.16.0",
