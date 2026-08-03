@@ -26,6 +26,24 @@ export const ZONES = {
   organization: ['/n/organization'],
   kyc:          ['/n/kyc'],
   ubo:          ['/n/ubo'],
+  // Ajouté 2026-08-03 après relecture complète de la table de routes du bundle
+  // (230 routes) : deux surfaces UTILISATEUR qui tombaient sur zoneForRoute() → null.
+  //   claim-management (Követeléskezelés) : /claim-management/documents et
+  //     /claim-management/wizard. Atteignable depuis les factures échues — le bundle
+  //     la câble dans le menu principal (mainMenuDefaultFilterParameters
+  //     ["claim-management"]) et pousse nuxt.claim-management.wizard depuis la liste
+  //     des documents EXPIRED. Aucune collision : les autres préfixes en /n/c… sont
+  //     /n/campaign-manager et /n/ceginfo, dont aucun n'est préfixe de l'autre.
+  //   auth : les routes /auth du Nuxt (registration, registration/activate,
+  //     activation-resend, password-reset, otp, im-not-a-robot, email) sont de vrais
+  //     parcours client. Le login public, lui, n'est PAS ici : aucune route
+  //     /auth/login dans la table — il est servi par l'ancien front v3 et reste
+  //     couvert par _common. Voir la note EXCLUDE de tools/extract-bundle.js.
+  // Les noms de zone reprennent la dérivation de route-map.js (premier segment,
+  // minuscules, non-alphanumériques retirés) pour que le mapping bundle→zone donne
+  // exactement ce nom au lieu de proposer une « new zone ».
+  claimmanagement: ['/n/claim-management'],
+  auth:         ['/n/auth'],
 };
 
 export function buildIndex() {
