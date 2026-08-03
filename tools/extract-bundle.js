@@ -116,11 +116,27 @@ async function main() {
   fs.writeFileSync(path.join(bundleDir, 'new-zones.json'), JSON.stringify(newZones, null, 2) + '\n');
   console.log(`routes parsed: ${routes.length} | new zones to add: ${newZones.length}`);
 
-  // 5. Write build-shards input. Drop strings that live ONLY in admin/auth areas
-  //    (normal users can't see the admin panel; /auth is the legacy login) so we
-  //    neither waste translation effort nor ship a dead shard. A string shared with
-  //    a real zone keeps its non-excluded zones.
-  const EXCLUDE = new Set(['admin', 'auth', 'test', 'uikit', 'misc', 'error', 'other']);
+  // 5. Write build-shards input. Drop strings that live ONLY in a zone no customer
+  //    can reach, so we neither waste translation effort nor ship a dead shard. A
+  //    string shared with a real zone keeps its non-excluded zones.
+  //      admin — Billingo's own back-office (feature switches, bank-account and
+  //              tax-number blacklists, coupon/subscription refunds, KYC review).
+  //      test  — dev scaffolding routes (/test/menu-debug, /test/nuxt-page/sentry).
+  //      uikit — the component gallery (/ui-kit/colors, /ui-kit/icons); its only HU
+  //              string is a note to developers about Composition API.
+  //      error — /error/:status? contributes zero extractable HU string, so the zone
+  //              would only add noise; its wording lives in the i18n catalog.
+  //      misc, other — not routes at all: parseRoutes' catch-all for `path:"/"`
+  //              layout roots and for the stray `path:"other"` literal.
+  //    `auth` used to be here, justified as "the legacy login". Only half true, and
+  //    it cost real coverage: the public login IS legacy v3 (there is no /auth/login
+  //    in the Nuxt route table, and its wording already sits in _common), but the
+  //    Nuxt /auth/* routes are registration, activation + activation-resend,
+  //    password reset, OTP/2FA and the im-not-a-robot check — customer flows, whose
+  //    ~12 auth-only strings (e.g. "Sikeres aktiválás!", "Emlékezzen erre az
+  //    eszközre") were being dropped before build-shards could even list them as a
+  //    delta. Kept in, and mapped to a zone by tools/zones.js (`auth: ['/n/auth']`).
+  const EXCLUDE = new Set(['admin', 'test', 'uikit', 'misc', 'error', 'other']);
   const lines = [];
   for (const [hu, zones] of Object.entries(observed)) {
     const keep = zones.filter((z) => !EXCLUDE.has(z));
