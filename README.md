@@ -4,117 +4,297 @@
 
 # Translator for Billingo
 
-**Translate the Hungarian [Billingo](https://app.billingo.hu) invoicing UI into English or French — live, in place, no reload.**
+**Read the Hungarian [Billingo](https://app.billingo.hu) invoicing UI in English or French — live, in place, no reload.**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-4F46E5.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-1.1.0-4F46E5.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-1.0.0-4F46E5.svg)](CHANGELOG.md)
 [![Manifest V3](https://img.shields.io/badge/Manifest-V3-4F46E5.svg)](manifest.json)
-[![Chrome + Firefox](https://img.shields.io/badge/Chrome%20%2B%20Firefox-supported-4F46E5.svg)](#install)
+[![Coverage 97.8%](https://img.shields.io/badge/coverage-97.8%25-4F46E5.svg)](CHANGELOG.md)
+[![Chrome + Firefox](https://img.shields.io/badge/Chrome%20%2B%20Firefox-supported-4F46E5.svg)](#-install)
+
+[Install](#-install) · [Usage](#-usage) · [Development](#-development) · [Privacy](#-privacy) · [Changelog](CHANGELOG.md)
 
 </div>
 
 > [!IMPORTANT]
-> **Unofficial extension.** This is an independent, community-built tool. It is **not affiliated with, endorsed by, or connected to Billingo** or its operators. "Billingo" is a trademark of its respective owner and is used here only to describe what the extension does.
+> **Unofficial extension.** An independent, community-built tool — **not affiliated with, endorsed by, or connected to Billingo** or its operators. "Billingo" is a trademark of its respective owner, used here only to describe what the extension does.
 
 ---
 
-## Why
+## 💡 Why
 
-Billingo is a great Hungarian invoicing tool — but its interface is **Hungarian only**. If you're a non-Hungarian-speaking founder, accountant, or freelancer who has to use it, every screen is a guessing game. This extension overlays a **hand-curated English or French translation** on top of the live UI so you can actually read what you're clicking.
+Billingo is a good Hungarian invoicing tool, but its interface is **Hungarian only**. If you are a
+non-Hungarian-speaking founder, accountant or freelancer who has to use it, every screen is a
+guessing game. This extension overlays a **hand-curated English or French translation** on the live
+UI so you can read what you are clicking.
 
-## Features
+Coverage is measured, not claimed: **97.8 %** of the text Billingo actually renders, checked against
+the app's own Hungarian message catalog. [`CHANGELOG.md`](CHANGELOG.md) explains how that number is
+obtained and what the remaining 2 % is.
 
-- 🌍 **Live translation** of `app.billingo.hu` into **English** or **French**.
-- ⚡ **Instant switching** — change language from the popup, no page reload. Original Hungarian text is remembered, so you can switch back to **Magyar (off)** at any time.
-- 🧩 **Route-aware dictionary** — the dictionary is sharded per app section; the shard for the current page loads first, then the rest are pulled in once the page is idle so modals and banners from other sections are covered too.
-- 🔁 **SPA-aware** — follows Billingo's in-app navigation and dynamically rendered content (via a `MutationObserver`).
-- 🧠 **Beyond exact matches** — normalises whitespace, tolerates trailing label punctuation, and fills templated messages (`:type letöltése` → `Télécharger la facture`, `17 db` → `17 pièces`), so dynamic text is translated too.
-- ✍️ **Curated, documented translations** — non-obvious fiscal/legal terms are translated deliberately, with rationale recorded in [`TRANSLATIONS.md`](TRANSLATIONS.md).
-- 🔒 **Private by design** — no analytics, no servers, no data leaves your browser. See [`PRIVACY.md`](PRIVACY.md).
-- 🧱 **Manifest V3**, works on **Chrome / Edge** and **Firefox**.
+## ✨ Features
 
-## Screenshots
-
-> 📸 _Screenshots are added with the first store release. See [`store/`](store/) for the listing assets._
-
-## Install
-
-### From the stores (recommended)
-
-| Browser | Link |
+|  | |
 | --- | --- |
-| Chrome / Edge | _Chrome Web Store — coming soon_ |
-| Firefox | _Firefox Add-ons (AMO) — coming soon_ |
+| 🌍 **Live translation** | `app.billingo.hu` in **English** or **French**, substituted in place. |
+| ⚡ **Instant switching** | No reload. The original Hungarian is remembered per node, so **Magyar (off)** restores the page exactly. |
+| 🧩 **Route-aware dictionary** | Sharded per app section: the current page's shard loads first, the rest arrive once the page is idle, so modals and banners from other sections are covered too. |
+| 🔁 **SPA-aware** | Follows Billingo's in-app navigation and dynamically rendered content. |
+| 🧠 **Beyond exact matches** | Eight lookup layers handle indentation, trailing punctuation, casing, `:token` templates (`:type letöltése` → `Télécharger la facture`), numbers (`17 db` → `17 pièces`), parentheses and separators. |
+| 🧾 **Fiscal safety** | Amounts, tax numbers, invoice serials, IBANs, dates and addresses are never rewritten — a wrong number on a NAV-reported document is worse than untranslated text, and a test enforces it against the real dictionary. |
+| 📤 **Miss export** | The popup can copy or download every string it could not translate. That is how the dictionary grows. |
+| 🔒 **Private by design** | No analytics, no servers, nothing leaves your browser. See [`PRIVACY.md`](PRIVACY.md). |
+| 🧱 **Manifest V3** | One codebase for **Chrome / Edge** and **Firefox**. |
 
-### From source (developer mode)
+## 🚀 Install
 
-**Chrome / Edge**
-
-1. Clone or [download](https://github.com/alexvlrt/billingo-translator) this repository.
-2. Open `chrome://extensions`.
-3. Enable **Developer mode** (top-right).
-4. Click **Load unpacked** and select the project folder.
-5. Pin **Translator for Billingo** in the toolbar.
-
-**Firefox**
-
-1. Open `about:debugging#/runtime/this-firefox`.
-2. Click **Load Temporary Add-on…** and select `manifest.json`.
-   _(Temporary add-ons are removed on restart — for permanent local use, install the signed `.xpi` once published.)_
-
-Then open [Billingo](https://app.billingo.hu), click the toolbar icon, and pick your language.
-
-## Usage
-
-- Click the toolbar icon → choose **Magyar (off)**, **English**, or **Français**.
-- The popup shows live **coverage** for the current page.
-
-## How it works
-
-The extension is a content script that runs only on `https://app.billingo.hu/*`. It never talks to a remote server — the dictionary ships inside the extension.
-
-| Component | Responsibility |
-| --- | --- |
-| `src/translator.js` | Pure lookup: Hungarian string → EN/FR string. |
-| `src/dom-walker.js` | Walks text nodes, translates them, and remembers the original so it can restore Hungarian. |
-| `src/shard-loader.js` | Loads the right dictionary shard for the current route (`dict/_index.json` maps route prefixes → shards). |
-| `src/spa-router.js` | Detects Billingo's single-page-app navigation and re-runs translation. |
-| `src/content.js` | Wires it together, observes DOM mutations, and talks to the popup. |
-| `dict/<lang>/<shard>.json` | The curated dictionaries (`en/`, `fr/`). |
-
-## Contributing translations
-
-Coverage grows by adding string pairs.
-
-1. Add the pair to **`dict/en.json`** and **`dict/fr.json`** — these are the source of truth. The per-zone files in `dict/en/` and `dict/fr/` are **generated**, so editing them directly is overwritten by the next build.
-2. Re-shard with `node tools/build-shards.js`.
-3. For any non-obvious choice (fiscal, legal, or ambiguous terms), add a short note to [`TRANSLATIONS.md`](TRANSLATIONS.md).
-4. Run the tests and open a pull request.
-
-Translation discussions and corrections are very welcome — [open an issue](https://github.com/alexvlrt/billingo-translator/issues).
-
-## Development
+### 1 · Build the packages
 
 ```bash
-npm install      # dev dependencies (jsdom, playwright)
-npm test         # run the test suite
+git clone https://github.com/alexvlrt/billingo-translator.git
+cd billingo-translator
+npm run package        # no npm install needed — the packaging step has zero dependencies
 ```
 
-**Rebuilding the icon.** The toolbar icon is generated from [`icons/icon.svg`](icons/icon.svg) (the `Á` glyph is traced to a path, so the SVG is font-independent). To regenerate the PNGs after editing the SVG:
+| Output | Use |
+| --- | --- |
+| `dist/chrome/` | unpacked folder for Chrome's **Load unpacked** |
+| `dist/firefox/` | unpacked folder for Firefox |
+| `dist/translator-for-billingo-chrome-1.0.0.zip` | Chrome Web Store upload |
+| `dist/translator-for-billingo-firefox-1.0.0.zip` | AMO upload → Mozilla returns a **signed `.xpi`** |
+
+The payload is an allowlist of exactly the files needed at runtime, and the build refuses to write
+anything when it is inconsistent — a missing content script, an icon or popup asset that would 404,
+a `web_accessible_resources` pattern matching no file, an ESM `import` that would stop Chrome
+evaluating a content script, or a shard named by `dict/_index.json` and absent in one language.
+
+### 2 · 🌐 Chrome / Edge
+
+1. Copy `dist/chrome/` somewhere **stable** — Chrome reads it from disk on every start, so not a
+   temp directory.
+2. Open `chrome://extensions` → enable **Developer mode** (top right).
+3. **Load unpacked** → select that folder.
+4. Pin **Translator for Billingo** to the toolbar.
+
+> [!TIP]
+> On **Windows + WSL**, copy the folder to a Windows path such as
+> `C:\Users\<you>\billingo-translator-extension\`. A `\\wsl.localhost\…` path breaks the extension
+> whenever WSL is not running.
+
+To update: replace the folder contents and click **Reload**.
+
+<details>
+<summary>Via the Chrome Web Store instead</summary>
+
+Upload `dist/translator-for-billingo-chrome-1.0.0.zip` to the
+[Web Store dashboard](https://chrome.google.com/webstore/devconsole) (one-off developer fee).
+Unlisted visibility is available, so publishing does not mean going public.
+
+</details>
+
+### 3 · 🦊 Firefox
+
+> [!NOTE]
+> Firefox only installs extensions **signed by Mozilla**. Signing is free and does not require
+> publishing: AMO's *self-distribution* channel signs your build without ever listing it publicly.
+
+1. Go to [addons.mozilla.org/developers](https://addons.mozilla.org/developers/) → **Submit a New
+   Add-on** → choose **"On your own"** (self-distribution), *not* "On this site".
+2. Upload `dist/translator-for-billingo-firefox-1.0.0.zip`. Automated review usually takes a few
+   minutes.
+3. Download the returned **signed `.xpi`** and open it in Firefox, or drag it onto the window.
+
+Run `npm run lint:ext` beforehand to check the payload with Mozilla's own validator — it should
+report 0 errors and 0 warnings.
+
+<details>
+<summary>Automate the signing with AMO API credentials</summary>
 
 ```bash
-npm i sharp      # not a project dependency; install ad hoc
-node scripts/build-icons.mjs
+npx --yes web-ext@8 sign --source-dir dist/firefox --channel unlisted \
+    --api-key "$AMO_JWT_ISSUER" --api-secret "$AMO_JWT_SECRET"
 ```
 
-## Privacy
+Get the keys at [addons.mozilla.org/developers/addon/api/key](https://addons.mozilla.org/developers/addon/api/key/).
 
-This extension collects **no personal data** and makes **no external network requests**. Your language preference is stored in your browser's sync storage. Full details in [`PRIVACY.md`](PRIVACY.md).
+</details>
 
-## Disclaimer
+<details>
+<summary>Skip signing entirely (Developer Edition / Nightly / ESR only)</summary>
 
-This project is an **independent, unofficial** tool and is **not affiliated with, sponsored by, or endorsed by Billingo** or its operating company. All product names, logos, and trademarks are the property of their respective owners. It is provided "as is" under the MIT license, with no warranty — use at your own discretion.
+Set `xpinstall.signatures.required` to `false` in `about:config`, then install `dist/firefox/`.
+This does **not** work in release or Beta Firefox.
 
-## License
+</details>
+
+> [!IMPORTANT]
+> The manifest requires **Firefox 127+**. Before 127, Firefox did not grant the host permission
+> behind `content_scripts` at install time, so the add-on would install and translate nothing. Zen
+> and other current Firefox forks are well past that floor.
+
+### 4 · Releasing (automated)
+
+CI signs and publishes on a tag, so the manual steps above are only needed for a first install or
+a local build.
+
+```bash
+# bump version in BOTH manifest.json and package.json, then:
+git tag v1.0.1 && git push origin v1.0.1
+```
+
+[`.github/workflows/release.yml`](.github/workflows/release.yml) then tests, builds, lints, signs
+the Firefox add-on through AMO, optionally publishes the Chrome update, and attaches both
+artifacts to a GitHub Release. `workflow_dispatch` runs a **dry run** by default — signing burns an
+AMO version number, and a burnt version cannot be reused.
+
+| Secret | For | Required |
+| --- | --- | --- |
+| `AMO_JWT_ISSUER`, `AMO_JWT_SECRET` | Firefox signing — [get them here](https://addons.mozilla.org/developers/addon/api/key/) | ✅ |
+| `CHROME_CLIENT_ID`, `CHROME_CLIENT_SECRET`, `CHROME_REFRESH_TOKEN`, `CHROME_EXTENSION_ID`, `CHROME_PUBLISHER_ID` | Chrome Web Store publish | ❌ — the step skips itself when absent |
+
+> [!NOTE]
+> Chrome has **no signing step**: the Web Store signs on publish, and its API can only *update* an
+> existing item. The listing has to be created once by hand in the dashboard before CI can push
+> updates to it.
+
+The `browser_specific_settings.gecko.id` in the manifest is what makes Firefox treat each build as
+the same add-on, so your stored language survives updates.
+
+## 🎯 Usage
+
+Open [Billingo](https://app.billingo.hu), click the toolbar icon, and pick **Magyar (off)**,
+**English** or **Français**.
+
+The popup also shows live coverage for the current page, and lets you copy or download the strings
+it could not translate — paste that list into an issue and it becomes the next batch of
+translations.
+
+---
+
+## 🛠️ Development
+
+### Setup
+
+```bash
+npm install     # jsdom, acorn, playwright — needed by the tests
+npm test        # 291 tests, node:test
+```
+
+No bundler, no build step for the extension itself: `dist/` is a filtered copy.
+
+### Repository layout
+
+Two halves with **different rules** — conflating them is the easiest mistake to make here:
+
+| | Path | Modules | Ships |
+| --- | --- | --- | --- |
+| **Runtime extension** | `src/`, `dict/`, `manifest.json`, `icons/` | classical scripts (**no ESM**) | ✅ |
+| **Build & capture tooling** | `tools/`, `scripts/` | ESM (`"type": "module"`) | ❌ |
+
+> [!WARNING]
+> **Never add `import`/`export` to `src/`.** Those files are loaded by the browser as classical
+> content scripts, in the fixed order set by `manifest.json`, each an IIFE publishing onto
+> `globalThis.BillingoTranslator`. An ESM statement makes Chrome refuse to evaluate the script, and
+> the failure only shows up on the live site. `npm run package` fails the build if it finds one.
+
+| File | Responsibility |
+| --- | --- |
+| `src/translator.js` | Pure lookup, eight layers, plus hit/miss stats. No DOM, no `chrome.*`. |
+| `src/dom-walker.js` | Walks text nodes and translatable attributes, remembers originals, runs the `MutationObserver`. |
+| `src/shard-loader.js` | Route → zone → lazy `fetch` of `dict/<lang>/<zone>.json`, merged into one object. |
+| `src/spa-router.js` | Detects Billingo's SPA navigation (polling is the reliable path). |
+| `src/content.js` | Wiring, storage, popup messaging, monolithic-dict fallback. |
+| `src/popup.{html,js,css}` | Language picker, live coverage, miss export. |
+
+### Commands
+
+```bash
+npm test                            # the whole suite (291 tests)
+npm run package                     # dist/{chrome,firefox} + one zip each, validated
+npm run lint:ext                    # Mozilla web-ext lint over dist/firefox (via npx)
+
+node tools/build-shards.js          # dict/{en,fr}.json -> dict/<lang>/<zone>.json
+node tools/mine-html-keys.js        # derive matchable segments from v-html keys
+node scripts/build-icons.mjs        # PNGs from icons/icon.svg; needs `npm i sharp` ad hoc
+```
+
+### Adding translations
+
+`dict/en.json` and `dict/fr.json` are the **source of truth**. The per-zone files in `dict/en/` and
+`dict/fr/` are **generated** — editing them directly is overwritten by the next build.
+
+1. Add `"<hungarian>": "<translation>"` to **both** `dict/en.json` and `dict/fr.json`. The key sets
+   must stay identical, and **no value may be empty**: an empty value means "miss" and leaves
+   Hungarian on screen.
+2. Run `node tools/build-shards.js`.
+3. Record any non-obvious fiscal or legal choice in [`TRANSLATIONS.md`](TRANSLATIONS.md) as a dated
+   entry.
+4. `npm test`, then open a pull request.
+
+The fastest way to find what is missing: use the extension, then hit **Copy untranslated** in the
+popup. That list is exactly what the dictionary lacks on the screens you actually visit.
+
+`dict/_rejected.json` is a committed denylist of strings that must never become keys (foreign date
+locales, dev doc comments, internal fixtures). Adding an entry is a documented decision; without
+it, the next capture resurrects the same garbage.
+
+### Where the strings come from
+
+`tools/` can rebuild the candidate list from the app itself. `tools/extract-bundle.js` needs a
+Netscape cookie jar for an authenticated session — only to fetch the app shell, since the Nuxt
+chunks themselves are public. It yields Billingo's own Hungarian message catalog, the authoritative
+inventory of everything the UI can display.
+
+> [!CAUTION]
+> `app.billingo.hu` is a **production invoicing app wired to NAV**, the Hungarian tax authority —
+> not a sandbox. Capture tooling must stay strictly **read-only**: navigate by URL, open dropdowns,
+> then Escape. Never click a commit control — no document issue, no draft save, no wizard "Tovább"
+> (it can start a real bank link), no delete or confirm.
+
+### Testing
+
+`node:test` + `assert`. Pure logic is tested directly, DOM code under jsdom, and `src/*.js` is
+loaded through `vm` (`tests/load-script.js`) because those files have no exports. There is no lint,
+type-check or CI — the tests are the only automated safety net, so **add one for any change** to the
+walker, the translator layers, the loader, the router, the filters or the packaging.
+
+Two tests guard whole classes of defect rather than individual functions:
+
+- **`tests/dict-fiscal-safety.test.js`** runs the **real** dictionary through the real translator.
+  Every other translator test uses a synthetic one, which is exactly how an amount-mangling bug once
+  slipped through.
+- **`tests/package.test.js`** asserts the ZIP structure a real unzip expects, and the per-browser
+  manifest rules.
+
+### CI
+
+[`.github/workflows/ci.yml`](.github/workflows/ci.yml) runs on every push to `main` and every pull
+request: install, test, package, and Mozilla's `web-ext lint`. Packages are attached as build
+artifacts, so a reviewer can load a branch without building it locally.
+
+Two deliberate choices worth knowing before you touch them:
+
+- `npm ci --ignore-scripts` — playwright's postinstall downloads ~400 MB of browsers that only
+  `tools/` uses, never the tests.
+- `npm test` globs `tests/*.test.js`, **one level**. `tests/**/*.test.js` is expanded by neither
+  POSIX `sh` nor bash without `globstar`, so it reached `node` as a literal string and depended on
+  the test runner's own glob support — which varies by Node version and would have broken CI on a
+  different runner image.
+
+Architecture detail and the invariants you must not break live in [`CLAUDE.md`](CLAUDE.md).
+
+---
+
+## 🔒 Privacy
+
+No personal data collected, no external network requests. Your language preference is stored in your
+browser's sync storage. Full details in [`PRIVACY.md`](PRIVACY.md).
+
+## ⚖️ Disclaimer & License
+
+This project is an **independent, unofficial** tool and is **not affiliated with, sponsored by, or
+endorsed by Billingo** or its operating company. All product names, logos and trademarks are the
+property of their respective owners. Provided "as is", with no warranty — use at your own
+discretion.
 
 [MIT](LICENSE) © 2026 Alexandre Vuillerot
