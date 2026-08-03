@@ -10,6 +10,10 @@
   --fg-muted:     #6B7280;
   --border:       #E5E7EB;
   --track:        #F3F4F6;
+  /* Text on a --brand fill, and the error colour. Both flip in dark mode:
+     the dark --brand is light, so white-on-brand would fail contrast. */
+  --on-brand:     #FFFFFF;
+  --danger:       #B91C1C;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -23,6 +27,8 @@
     --fg-muted:     #A1A1AA;
     --border:       #27272A;
     --track:        #27272A;
+    --on-brand:     #1E1B4B;
+    --danger:       #FCA5A5;
   }
 }
 
@@ -118,7 +124,12 @@ body {
   justify-content: space-between;
 }
 .bt-coverage-label { font-size: 13px; font-weight: 500; }
+/* Percentage and miss count travel together on the right of the row. */
+.bt-coverage-nums  { display: inline-flex; align-items: baseline; gap: 6px; }
 .bt-coverage-pct   { font-size: 13px; font-weight: 600; color: var(--fg); }
+.bt-miss-count     { font-size: 12px; color: var(--fg-muted); }
+/* Decorative separator: kept out of textContent so the count stays clean. */
+.bt-miss-count::before { content: "·"; margin-right: 5px; }
 .bt-bar {
   margin-top: 8px;
   height: 6px;
@@ -137,6 +148,64 @@ body {
   font-size: 12px;
   color: var(--fg-muted);
 }
+
+/* Untranslated-string export */
+.bt-export {
+  padding: 16px;
+  border-bottom: 1px solid var(--border);
+}
+.bt-export-title {
+  margin: 0 0 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--fg);
+}
+.bt-actions { display: flex; gap: 8px; }
+.bt-btn {
+  height: 36px;
+  padding: 0 12px;
+  background: var(--surface-2);
+  color: var(--fg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font: inherit;
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 120ms ease-out, border-color 120ms ease-out;
+}
+.bt-btn:hover:not(:disabled) { border-color: var(--brand); }
+.bt-btn:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+.bt-btn:disabled { opacity: 0.5; cursor: default; }
+.bt-btn-primary {
+  flex: 1 1 auto; /* the primary action absorbs the leftover width */
+  background: var(--brand);
+  border-color: var(--brand);
+  color: var(--on-brand);
+}
+.bt-btn-primary:hover:not(:disabled) { background: var(--brand-strong); border-color: var(--brand-strong); }
+
+.bt-export-hint,
+.bt-export-warn,
+.bt-export-status {
+  margin: 8px 0 0;
+  font-size: 12px;
+  line-height: 1.35;
+}
+.bt-export-hint { color: var(--fg-muted); }
+.bt-export-warn { color: var(--danger); }
+/* Live region: kept rendered even when empty — a display:none region is not
+   reliably announced when it later gains text. min-height stops the layout
+   from jumping when feedback appears. */
+.bt-export-status {
+  min-height: 16px;
+  font-weight: 500;
+  color: var(--brand-strong);
+}
+.bt-export-status.bt-err { color: var(--danger); }
 
 /* Footer */
 .bt-footer {

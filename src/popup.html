@@ -33,7 +33,10 @@
   <section class="bt-coverage">
     <div class="bt-coverage-row">
       <span class="bt-coverage-label">Coverage</span>
-      <span class="bt-coverage-pct" id="bt-coverage-pct">—</span>
+      <span class="bt-coverage-nums">
+        <span class="bt-coverage-pct" id="bt-coverage-pct">—</span>
+        <span class="bt-miss-count" id="bt-miss-count" hidden></span>
+      </span>
     </div>
     <div class="bt-bar" aria-hidden="true">
       <div class="bt-bar-fill" id="bt-bar-fill" style="width:0%"></div>
@@ -41,7 +44,27 @@
     <div class="bt-coverage-sub" id="bt-coverage-sub">Open a Billingo tab to translate.</div>
   </section>
 
-  <footer class="bt-footer">v1.1 · Unofficial extension</footer>
+  <!-- Export of the untranslated strings seen on this tab: the only feedback
+       loop from real usage back into dict/{en,fr}.json. -->
+  <section class="bt-export" aria-labelledby="bt-export-title">
+    <h2 class="bt-export-title" id="bt-export-title">Untranslated strings</h2>
+    <div class="bt-actions">
+      <button type="button" class="bt-btn bt-btn-primary" id="bt-copy"
+              title="Copy to the clipboard, one string per line" disabled>Copy untranslated</button>
+      <button type="button" class="bt-btn" id="bt-download"
+              aria-label="Download untranslated strings as JSON"
+              title="Save the list as a JSON file" disabled>Download</button>
+    </div>
+    <!-- Why the buttons are disabled; hidden while there is something to export. -->
+    <p class="bt-export-hint" id="bt-export-hint">Nothing to export — no Billingo tab here.</p>
+    <p class="bt-export-warn" id="bt-export-truncated" hidden>List truncated — some untranslated strings were left out.</p>
+    <!-- Live region: copy/download result. Never left silent on failure. -->
+    <p class="bt-export-status" id="bt-export-status" role="status" aria-live="polite"></p>
+  </section>
+
+  <!-- The version is filled in from the manifest at runtime: a number hardcoded
+       here drifts silently the first time someone forgets to update it. -->
+  <footer class="bt-footer"><span id="bt-version"></span>Unofficial extension</footer>
 
   <script src="popup.js"></script>
 </body>
