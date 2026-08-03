@@ -1,0 +1,227 @@
+name: Release
+
+# Signs the extension for Firefox and, if configured, publishes the Chrome update.
+#
+# Normal use: push a tag that matches the manifest version.
+#     git tag v1.0.0 && git push origin v1.0.0
+#
+# `workflow_dispatch` defaults to a DRY RUN: it tests, builds and lints without
+# touching a store. Use it to validate the pipeline — signing burns a version number
+# on AMO, and a burnt version cannot be reused.
+#
+# Required secrets for Firefox (signing fails loudly without them):
+#     AMO_JWT_ISSUER    AMO API key    -> addons.mozilla.org/developers/addon/api/key/
+#     AMO_JWT_SECRET    AMO API secret
+#
+# Optional secrets for Chrome. The Chrome step SKIPS ITSELF when they are absent, so a
+# Firefox-only setup needs no configuration. Note that Chrome has no separate signing
+# step — the Web Store signs on publish — and the listing must already exist: the API
+# can update an item, never create one.
+#     CHROME_CLIENT_ID  CHROME_CLIENT_SECRET  CHROME_REFRESH_TOKEN
+#     CHROME_EXTENSION_ID  CHROME_PUBLISHER_ID
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Build and lint only — do not sign or publish'
+        type: boolean
+        default: true
+
+permissions:
+  contents: write        # needed to create the GitHub Release
+
+concurrency:
+  group: release
+  cancel-in-progress: false   # never interrupt a submission in flight
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      # A tag push always ships. workflow_dispatch ships only when dry_run is off.
+      - name: Resolve mode
+        id: mode
+        run: |
+          if [ "${{ github.event_name }}" = "push" ] || [ "${{ inputs.dry_run }}" = "false" ]; then
+            echo "ship=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ship=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Dry run — building and linting only, nothing will be signed or published."
+          fi
+
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+
+      # Signing an untested build is how a broken version reaches a store permanently:
+      # AMO will not let you reuse the version number to correct it.
+      - name: Test
+        run: npm test
+
+      - name: Build packages
+        run: npm run package
+
+      - name: Lint the Firefox payload
+        run: npm run lint:ext
+
+      # The tag is the human intent; the manifest is what actually ships. If they
+      # disagree, stop here — AMO rejects a version it has already signed, and finding
+      # that out after a successful-looking build is far more confusing.
+      - name: Check the tag matches the manifest version
+        if: github.event_name == 'push'
+        run: |
+          manifest=$(node -p "require('./manifest.json').version")
+          tag="${GITHUB_REF_NAME#v}"
+          echo "manifest=$manifest tag=$tag"
+          if [ "$manifest" != "$tag" ]; then
+            echo "::error::Tag $GITHUB_REF_NAME does not match manifest.json version $manifest."
+            echo "::error::Bump version in BOTH manifest.json and package.json, then retag."
+            exit 1
+          fi
+
+      - name: Read version
+        id: version
+        run: echo "value=$(node -p "require('./manifest.json').version")" >> "$GITHUB_OUTPUT"
+
+      # --- Firefox -----------------------------------------------------------
+      # Credentials go through the environment, not argv: anything on a command line is
+      # visible to other processes and easy to leak into a log.
+      - name: Sign for Firefox (AMO, unlisted)
+        if: steps.mode.outputs.ship == 'true'
+        env:
+          WEB_EXT_API_KEY: ${{ secrets.AMO_JWT_ISSUER }}
+          WEB_EXT_API_SECRET: ${{ secrets.AMO_JWT_SECRET }}
+        run: |
+          if [ -z "$WEB_EXT_API_KEY" ] || [ -z "$WEB_EXT_API_SECRET" ]; then
+            echo "::error::AMO_JWT_ISSUER / AMO_JWT_SECRET are not set."
+            echo "::error::Create them at https://addons.mozilla.org/developers/addon/api/key/"
+            exit 1
+          fi
+          # --channel unlisted: Mozilla signs the build for self-distribution and never
+          # lists it publicly. Switching to `listed` later also needs --amo-metadata on
+          # the first submission (categories, summary, license).
+          npx --yes web-ext@8 sign \
+            --source-dir dist/firefox \
+            --artifacts-dir dist/signed \
+            --channel unlisted \
+            --no-input
+          ls -la dist/signed
+
+      - name: Locate the signed .xpi
+        id: xpi
+        if: steps.mode.outputs.ship == 'true'
+        run: |
+          # web-ext names it like translator_for_billingo-1.0.0-an+fx.xpi, so glob it
+          # rather than guess — and fail if signing produced nothing.
+          path=$(find dist/signed -name '*.xpi' -print -quit)
+          if [ -z "$path" ]; then
+            echo "::error::web-ext sign reported success but produced no .xpi."
+            exit 1
+          fi
+          echo "path=$path" >> "$GITHUB_OUTPUT"
+
+      # --- Chrome (optional) -------------------------------------------------
+      - name: Publish to the Chrome Web Store
+        if: steps.mode.outputs.ship == 'true'
+        env:
+          CLIENT_ID: ${{ secrets.CHROME_CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.CHROME_CLIENT_SECRET }}
+          REFRESH_TOKEN: ${{ secrets.CHROME_REFRESH_TOKEN }}
+          EXTENSION_ID: ${{ secrets.CHROME_EXTENSION_ID }}
+          PUBLISHER_ID: ${{ secrets.CHROME_PUBLISHER_ID }}
+          ZIP: dist/translator-for-billingo-chrome-${{ steps.version.outputs.value }}.zip
+        run: |
+          set -euo pipefail
+          if [ -z "${CLIENT_ID:-}" ] || [ -z "${CLIENT_SECRET:-}" ] || [ -z "${REFRESH_TOKEN:-}" ] \
+             || [ -z "${EXTENSION_ID:-}" ] || [ -z "${PUBLISHER_ID:-}" ]; then
+            echo "::notice::Chrome secrets not configured — skipping the Web Store publish."
+            echo "::notice::The zip is still attached to the release for a manual upload."
+            exit 0
+          fi
+
+          token=$(curl -sS --fail-with-body https://oauth2.googleapis.com/token \
+            -d "client_id=$CLIENT_ID" \
+            -d "client_secret=$CLIENT_SECRET" \
+            -d "refresh_token=$REFRESH_TOKEN" \
+            -d "grant_type=refresh_token" \
+            | node -p "JSON.parse(require('fs').readFileSync(0,'utf8')).access_token || ''")
+          if [ -z "$token" ]; then
+            echo "::error::Could not exchange the refresh token for an access token."
+            exit 1
+          fi
+          echo "::add-mask::$token"
+
+          base=https://chromewebstore.googleapis.com
+          item="publishers/$PUBLISHER_ID/items/$EXTENSION_ID"
+
+          # curl exits 0 on an HTTP 4xx unless told otherwise, and the Web Store also
+          # reports failures inside a 200 body — so check both.
+          echo "Uploading $ZIP"
+          up=$(curl -sS --fail-with-body -X POST -T "$ZIP" \
+            -H "Authorization: Bearer $token" \
+            "$base/upload/v2/$item:upload")
+          echo "$up"
+          node -e '
+            const r = JSON.parse(process.argv[1] || "{}");
+            const state = r.uploadState ?? r.state;
+            if (r.error || (state && !["SUCCESS", "IN_PROGRESS"].includes(state))) {
+              console.error("::error::Chrome upload failed: " + JSON.stringify(r));
+              process.exit(1);
+            }
+          ' "$up"
+
+          echo "Publishing"
+          pub=$(curl -sS --fail-with-body -X POST -H "Content-Length: 0" \
+            -H "Authorization: Bearer $token" \
+            "$base/v2/$item:publish")
+          echo "$pub"
+          node -e '
+            const r = JSON.parse(process.argv[1] || "{}");
+            if (r.error) {
+              console.error("::error::Chrome publish failed: " + JSON.stringify(r));
+              process.exit(1);
+            }
+            // Review can take days; the API only confirms the submission was accepted.
+            for (const s of r.itemError ?? []) console.log("::warning::" + JSON.stringify(s));
+          ' "$pub"
+          echo "::notice::Submitted to the Chrome Web Store. Publication waits on Google review."
+
+      # --- Artifacts ---------------------------------------------------------
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-${{ steps.version.outputs.value }}
+          path: |
+            dist/*.zip
+            dist/signed/*.xpi
+          if-no-files-found: error
+          retention-days: 90
+
+      # Creating a release needs a tag to name it, so a manual ship-run stops after
+      # signing. Say so rather than let the missing release look like a failure.
+      - name: Note a tagless ship run
+        if: steps.mode.outputs.ship == 'true' && github.event_name != 'push'
+        run: |
+          echo "::notice::Signed and published, but no GitHub Release was created — that needs a v* tag push."
+
+      - name: Create the GitHub Release
+        if: steps.mode.outputs.ship == 'true' && github.event_name == 'push'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.version.outputs.value }}
+          XPI: ${{ steps.xpi.outputs.path }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            --title "v$VERSION" \
+            --notes "Signed Firefox add-on and Chrome package for v$VERSION. See CHANGELOG.md." \
+            "$XPI#Firefox (signed .xpi — install directly)" \
+            "dist/translator-for-billingo-chrome-$VERSION.zip#Chrome / Edge (unpacked zip)"
