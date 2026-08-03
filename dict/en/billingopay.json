@@ -1,6 +1,7 @@
 {
   "*Mi az a tranzakciós (IC++) díj? Ez a legátláthatóbb díjazás. A teljes díj 3 részből áll: a bankközi díj (IC),\n      a kártyatársasági díj (pl. Visa/Mastercard díja), és a mi rendkívül alacsony feldolgozási díjunk (pl. 0,70%).\n      Így te mindig csak a tényleges díjat fizeted, rejtett felár nélkül.": "*What is the interchange++ (IC++) fee? This is the most transparent pricing. The total fee consists of 3 parts: the interchange fee (IC),\n      the card scheme fee (e.g. Visa/Mastercard fee), and our extremely low processing fee (e.g. 0.70%).\n      This way you always pay only the actual fee, with no hidden markup.",
   "0 - 4 990 Ft/hó": "0 - 4,990 HUF/month",
+  "0 - 6 990 Ft/hó": "0 - 6,990 HUF/month",
   "A Billingo Pay minden elengedhetetlen biztonsági tanúsítvánnyal és hitelesítéssel rendelkezik,\n        hogy maximális biztonságot nyújtson a fizetési tranzakciók során a csalások elkerülésére.": "Billingo Pay holds all essential security certifications and authentication standards\n        to provide maximum security during payment transactions and prevent fraud.",
   "Ajánlatkérés": "Request a quote",
   "Ajánlatot kérek": "Request a quote",
@@ -11,6 +12,7 @@
   "Hogyan vághatsz bele?": "How can you get started?",
   "Ingyenes, hordozható, okos terminál": "Free, portable, smart terminal",
   "Kiutalás 1 munkanap alatt": "Transfer within 1 business day",
+  "Kiutalás akár 1 munkanap alatt": "Transfer in as little as 1 business day",
   "Max biztonság, zéró stressz": "Maximum security, zero stress",
   "POS-terminálunkkal,": "with our POS terminal,",
   "Tranzakciós díj: 0,2-1,2 %*": "Transaction fee: 0.2–1.2%*",

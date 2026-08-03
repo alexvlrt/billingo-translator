@@ -1,6 +1,7 @@
 {
   "2.890 Ft + ÁFA / hó": "2.890 Ft + VAT / mo",
   "29.880 Ft + ÁFA / év": "29.880 Ft + VAT / yr",
+  "A feltöltés folyamatban": "Upload in progress",
   "A funkció eléréséhez javasold ügyfelednek, hogy válassza": "To access this feature, recommend that your client select",
   "A kiadásod partnerhez kapcsolódik?": "Is your expense related to a partner?",
   "A művelet csak azokra a kijelölt számlákra lesz érvényes, amelyek": "The operation will only apply to those selected invoices that",
@@ -12,7 +13,7 @@
   "Bizonylat adatai": "Document details",
   "Csatolmány hozzáadása": "Add attachment",
   "Feltöltheti a számlaképeket": "You can upload invoice templates",
-  "Kelt": "Issued",
+  "Fotózd le a bizonylatot!": "Take a photo of the document!",
   "Kiadás jellemzői": "Expense characteristics",
   "Kiadás létrehozása": "Create expense",
   "kiválasztott": "selected",
@@ -23,6 +24,7 @@
   "Manuálisan is hozzáadhatsz kiadásokat": "You can also add expenses manually",
   "Manuálisan rögzített": "Manually recorded",
   "Másolat mentése": "Save copy",
+  "Maximum fájl mérete: 20 MB": "Maximum file size: 20 MB",
   "Milyen kiadásod volt?": "What was your expense?",
   "Módosítás mentése": "Save changes",
   "Naprakész cash-flow": "Up-to-date cash flow",
@@ -30,6 +32,7 @@
   "Nincsen mellékletek feltöltve": "No attachments uploaded",
   "Nyilvántartást vezethet a kifizetésekről": "You can keep records of payments",
   "Partner/Sorszám": "Partner/Number",
+  "Számlakép": "Invoice image",
   "számlát.": "invoice.",
   "Szűrés erre a partnerre": "Filter by this partner",
   "Szűrt csatolmányok letöltése": "Download filtered attachments",
@@ -37,7 +40,9 @@
   "Teljes ÁFA tartalom:": "Total VAT content:",
   "Tételesen milyen kiadásaid vannak?": "What are your itemized expenses?",
   "Tömeges fizetettre állítás": "Bulk mark as paid",
-  "Új kiadás": "New expense",
+  "Tranzakciók": "Transactions",
+  "Újrafotózás": "Retake photo",
   "Ügyfél értesítés elküldésre került!": "Customer notification sent!",
-  "Ügyfél értesítése az előfizetésről": "Notify customer about subscription"
+  "Ügyfél értesítése az előfizetésről": "Notify customer about subscription",
+  "Vagy töltsd fel közvetlenül a készülékedről": "Or upload directly from your device"
 }
