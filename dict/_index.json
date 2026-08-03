@@ -28,6 +28,10 @@
     "shard": "marketing"
   },
   {
+    "prefix": "/n/claim-management",
+    "shard": "claimmanagement"
+  },
+  {
     "prefix": "/n/user-invitation",
     "shard": "users"
   },
@@ -98,6 +102,10 @@
   {
     "prefix": "/n/kata",
     "shard": "tax"
+  },
+  {
+    "prefix": "/n/auth",
+    "shard": "auth"
   },
   {
     "prefix": "/n/bob",

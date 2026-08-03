@@ -1,6 +1,7 @@
 {
   "2.890 Ft + ÁFA / hó": "2.890 Ft + TVA / mois",
   "29.880 Ft + ÁFA / év": "29.880 Ft + TVA / an",
+  "A feltöltés folyamatban": "Téléversement en cours",
   "A funkció eléréséhez javasold ügyfelednek, hogy válassza": "Pour accéder à cette fonctionnalité, recommandez à votre client de sélectionner",
   "A kiadásod partnerhez kapcsolódik?": "Votre dépense est-elle liée à un partenaire?",
   "A művelet csak azokra a kijelölt számlákra lesz érvényes, amelyek": "L'opération ne s'appliquera qu'aux factures sélectionnées qui",
@@ -12,7 +13,7 @@
   "Bizonylat adatai": "Détails du document",
   "Csatolmány hozzáadása": "Ajouter une pièce jointe",
   "Feltöltheti a számlaképeket": "Vous pouvez télécharger des modèles de facture",
-  "Kelt": "Émis le",
+  "Fotózd le a bizonylatot!": "Photographiez le document !",
   "Kiadás jellemzői": "Caractéristiques de la dépense",
   "Kiadás létrehozása": "Créer une dépense",
   "kiválasztott": "sélectionné",
@@ -23,6 +24,7 @@
   "Manuálisan is hozzáadhatsz kiadásokat": "Tu peux aussi ajouter des dépenses manuellement",
   "Manuálisan rögzített": "Enregistré manuellement",
   "Másolat mentése": "Enregistrer la copie",
+  "Maximum fájl mérete: 20 MB": "Taille maximale du fichier : 20 Mo",
   "Milyen kiadásod volt?": "Quelle était votre dépense ?",
   "Módosítás mentése": "Enregistrer les modifications",
   "Naprakész cash-flow": "Trésorerie à jour",
@@ -30,6 +32,7 @@
   "Nincsen mellékletek feltöltve": "Aucune pièce jointe téléchargée",
   "Nyilvántartást vezethet a kifizetésekről": "Vous pouvez tenir un registre des paiements",
   "Partner/Sorszám": "Partenaire/Numéro",
+  "Számlakép": "Image de la facture",
   "számlát.": "facture.",
   "Szűrés erre a partnerre": "Filtrer par ce partenaire",
   "Szűrt csatolmányok letöltése": "Télécharger les pièces jointes filtrées",
@@ -37,7 +40,9 @@
   "Teljes ÁFA tartalom:": "Contenu total de la TVA :",
   "Tételesen milyen kiadásaid vannak?": "Quelles sont vos dépenses détaillées ?",
   "Tömeges fizetettre állítás": "Marquer en masse comme payé",
-  "Új kiadás": "Nouvelle dépense",
+  "Tranzakciók": "Transactions",
+  "Újrafotózás": "Reprendre la photo",
   "Ügyfél értesítés elküldésre került!": "Notification client envoyée !",
-  "Ügyfél értesítése az előfizetésről": "Notifier le client de l'abonnement"
+  "Ügyfél értesítése az előfizetésről": "Notifier le client de l'abonnement",
+  "Vagy töltsd fel közvetlenül a készülékedről": "Ou téléversez directement depuis votre appareil"
 }
