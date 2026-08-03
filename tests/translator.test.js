@@ -54,6 +54,37 @@ test('createStats: tracks hits and misses with dedup', () => {
   assert.deepEqual([...s.uniqueMisses].sort(), ['Bezár', 'Új ügyfél']);
 });
 
+test('createStats: our own output coming back is neither a hit nor a miss', () => {
+  // Bootstrap stashes the translated `title` and renders it into .tooltip-inner,
+  // so the walker meets its own English/French output as a brand-new text node.
+  // Counting that as a miss depressed the popup percentage and put target-language
+  // strings into the exported "untranslated Hungarian" list.
+  const s = createStats();
+  s.recordHit('Adószám', 'Tax number');
+  s.recordMiss('Tax number');
+
+  assert.equal(s.hits, 1);
+  assert.equal(s.misses, 0);
+  assert.deepEqual([...s.uniqueMisses], []);
+});
+
+test('createStats: a genuine Hungarian miss is still recorded', () => {
+  const s = createStats();
+  s.recordHit('Adószám', 'Tax number');
+  s.recordMiss('Új ügyfél');
+
+  assert.equal(s.misses, 1);
+  assert.deepEqual([...s.uniqueMisses], ['Új ügyfél']);
+});
+
+test('createStats: reset forgets remembered output too', () => {
+  const s = createStats();
+  s.recordHit('Adószám', 'Tax number');
+  s.reset();
+  s.recordMiss('Tax number'); // no longer known as ours
+  assert.equal(s.misses, 1);
+});
+
 test('createStats: reset clears all counters', () => {
   const s = createStats();
   s.recordHit('A');

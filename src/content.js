@@ -12,6 +12,25 @@
   const { createTranslator, createStats, walkAndTranslate, installObserver,
           createShardLoader, onRouteChange } = globalThis.BillingoTranslator;
 
+  // Everything is walked and observed from <html>, not <body>: the browser tab's
+  // title is a text node inside <head> (<title>), which a body-rooted walk can
+  // never reach — the tab kept showing Hungarian. It is an ordinary text node,
+  // so dom-walker needs no special case. Nothing else in <head> is at risk:
+  // dom-walker rejects SCRIPT/STYLE/NOSCRIPT text outright and <meta content>
+  // is not in its translatable-attribute list. Captured once — documentElement
+  // exists by document_idle and never changes for the document's lifetime.
+  const walkRoot = document.documentElement;
+
+  // The manifest cannot change while the tab lives, so read the version once.
+  // Stamped onto getStats replies so an exported miss list names its build.
+  const EXT_VERSION = api.runtime.getManifest().version;
+
+  // Cap on the miss list handed to the popup. A pathological page can produce
+  // thousands of unique misses and the reply crosses a process boundary, so an
+  // uncapped list would make the message payload unbounded. 2000 strings are
+  // already far more than anyone triages by hand.
+  const MISS_EXPORT_CAP = 2000;
+
   // Module state (per-tab).
   let currentLang = 'hu';
   let currentTranslate = null;
@@ -56,7 +75,7 @@
         .then((added) => {
           if (!added || seq !== applySeq || !currentTranslate) return;
           currentTranslate.refresh(); // new keys → rebuild the fallback index
-          walkAndTranslate(document.body, currentTranslate, currentStats);
+          walkAndTranslate(walkRoot, currentTranslate, currentStats);
         })
         .catch((err) => console.warn('[bt] zone prefetch failed:', err.message));
     });
@@ -75,10 +94,10 @@
       currentTranslate = null;
       loader = null;
       if (seq !== applySeq) return; // superseded by a newer applyLang call
-      walkAndTranslate(document.body, restoreTranslator, currentStats);
+      walkAndTranslate(walkRoot, restoreTranslator, currentStats);
       // walkAndTranslate is async (time-sliced) — the observer is idempotent
       // (no-op-by-equality) so it and the deferred walk slices both converge safely.
-      currentObserver = installObserver(document.body, restoreTranslator, currentStats);
+      currentObserver = installObserver(walkRoot, restoreTranslator, currentStats);
       return;
     }
 
@@ -91,21 +110,23 @@
       loader = createShardLoader({ index, fetchShard, lang });
       await loader.ensureCommon();
       await loader.ensureZoneForRoute(location.pathname);
-      currentTranslate = createTranslator(loader.getMerged());
+      // The translator needs the language to compose output the way the curated
+      // values do — French puts a space before '! ? ; : »'.
+      currentTranslate = createTranslator(loader.getMerged(), { lang });
       translateFn = currentTranslate;
     } catch (err) {
       console.warn('[bt] shard loader unavailable, falling back to monolithic dict:', err.message);
       loader = null;
       const dict = await loadMonolithic(lang);
-      currentTranslate = createTranslator(dict);
+      currentTranslate = createTranslator(dict, { lang });
       translateFn = currentTranslate;
     }
 
     if (seq !== applySeq) return; // superseded by a newer applyLang call
-    walkAndTranslate(document.body, translateFn, currentStats);
+    walkAndTranslate(walkRoot, translateFn, currentStats);
     // walkAndTranslate is async (time-sliced) — the observer is idempotent
     // (no-op-by-equality) so it and the deferred walk slices both converge safely.
-    currentObserver = installObserver(document.body, translateFn, currentStats);
+    currentObserver = installObserver(walkRoot, translateFn, currentStats);
     prefetchAllZones(seq);
   }
 
@@ -132,13 +153,55 @@
         // Always re-walk the new view, exactly like a language switch does — the
         // walk is idempotent (no-op-by-equality) and time-sliced, so this is cheap
         // and does not depend on the MutationObserver catching the SPA swap.
-        walkAndTranslate(document.body, currentTranslate, currentStats);
+        walkAndTranslate(walkRoot, currentTranslate, currentStats);
       });
 
     } catch (err) {
       console.error('[billingo-translator] init failed:', err);
     }
   })();
+
+  // --- getStats payload ------------------------------------------------------
+
+  // uniqueMisses is a Set at runtime, and Chrome serialises extension messages
+  // as JSON — a Set would arrive as `{}`. Always emit an Array (a copy, so the
+  // popup never holds a reference to live stats). Tolerates a missing stats
+  // object and an already-array uniqueMisses.
+  function listMisses(stats) {
+    const misses = stats && stats.uniqueMisses;
+    if (!misses) return [];
+    return Array.isArray(misses) ? misses.slice() : [...misses];
+  }
+
+  // A counter that got clobbered must not surface as NaN/undefined in the popup.
+  const toCount = (n) => (Number.isFinite(n) ? n : 0);
+
+  // Shape the reply to a `getStats` message. Pure — every input is passed in —
+  // so it is unit-testable without chrome.* or fetch; that is why it is
+  // published on BillingoTranslator at the bottom of this file.
+  //
+  // Backward compatible by contract: `ok`, `lang`, `hits`, `misses` and
+  // `uniqueMisses` keep the names and the meaning they had before an export UI
+  // existed. `pathname`, `version`, `uniqueMissCount` and `truncated` are
+  // additive, and make a harvested list self-describing: which page produced it,
+  // which build, and whether it is the whole story.
+  function buildStatsPayload({ lang, stats, pathname, version, cap = MISS_EXPORT_CAP }) {
+    const all = listMisses(stats);
+    // A garbage cap would silently empty the list (slice(0, NaN) === []), which
+    // reads as "no misses" instead of an error. Fall back to the real cap.
+    const limit = Number.isFinite(cap) && cap >= 0 ? cap : MISS_EXPORT_CAP;
+    return {
+      ok: true,
+      lang,
+      hits: toCount(stats && stats.hits),
+      misses: toCount(stats && stats.misses),
+      uniqueMisses: all.slice(0, limit),
+      uniqueMissCount: all.length, // total before the cap, so "2000 of N" is sayable
+      truncated: all.length > limit,
+      pathname,
+      version,
+    };
+  }
 
   // Listen for messages from popup.
   api.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
@@ -149,13 +212,13 @@
       return true; // async sendResponse
     }
     if (msg && msg.type === 'getStats') {
-      sendResponse({
-        ok: true,
+      // location is read per message, not cached: the SPA navigates under us.
+      sendResponse(buildStatsPayload({
         lang: currentLang,
-        hits: currentStats.hits,
-        misses: currentStats.misses,
-        uniqueMisses: [...currentStats.uniqueMisses],
-      });
+        stats: currentStats,
+        pathname: location.pathname,
+        version: EXT_VERSION,
+      }));
       return false;
     }
     return false;
@@ -170,4 +233,12 @@
       });
     }
   });
+
+  // Published for the unit tests (tests/content-stats.test.js): the rest of this
+  // file needs chrome.* and fetch, buildStatsPayload needs nothing.
+  // Self-initialise the namespace like every other src/ file, so publishing does not
+  // depend on load order (the destructure at the top would already have thrown, but
+  // the pattern should be uniform across the five scripts).
+  globalThis.BillingoTranslator = globalThis.BillingoTranslator || {};
+  globalThis.BillingoTranslator.buildStatsPayload = buildStatsPayload;
 })();

@@ -17,12 +17,36 @@
     'placeholder', 'title', 'aria-label', 'alt',
     'aria-placeholder', 'aria-description', 'label',
   ];
+  // `data-original-title` is deliberately NOT in that list, and not observed
+  // either. It is Bootstrap 4's tooltip stash: `_fixTitle()` moves `title` into it
+  // and blanks `title`, `_restoreTitle()` copies it back and drops it. Writing the
+  // stash breaks the "originals live in WeakMaps" invariant, because the value
+  // `_restoreTitle()` puts back into `title` is then OUR translation: the element's
+  // remembered Hungarian is replaced by our own output, the tooltip freezes in one
+  // language, and the translation is exported as untranslated Hungarian.
+  // Leaving the stash alone costs almost nothing: in the common order (our walk
+  // first) Bootstrap stashes the already-translated `title`, so the tooltip shows
+  // the translation anyway. The one case we give up is a tooltip Bootstrap
+  // initialised BEFORE our first walk (Hungarian in the stash, `title=""`): its
+  // first pop-up flashes Hungarian until the rendered `.tooltip-inner` text node is
+  // caught by the observer an idle flush later, and `_restoreTitle()` then hands the
+  // Hungarian back through `title`, where we do translate it — so every later
+  // pop-up is translated. A sub-frame flash on one hover is not worth an invariant.
+  // (The Bootstrap 5 spellings `data-bs-original-title` / `data-bs-title` occur
+  // nowhere in the bundle — Billingo ships Bootstrap 4.6.2 — so they are moot.)
   // A TEXTAREA's content is user data (invoice comments) and must never be
   // touched, but its placeholder is UI chrome — so it is skipped for text and
   // kept for attributes. SCRIPT/STYLE/NOSCRIPT are skipped for both.
   const SKIP_TEXT_TAGS = new Set(['SCRIPT', 'STYLE', 'NOSCRIPT', 'TEXTAREA']);
   const SKIP_ELEMENT_TAGS = new Set(['SCRIPT', 'STYLE', 'NOSCRIPT']);
   const BUTTON_INPUT_TYPES = new Set(['submit', 'button', 'reset']);
+  // On these elements every attribute we translate is a machine value rather
+  // than visible text: `<link title>` names an alternate-stylesheet set,
+  // `<meta>`/`<base>` render nothing, and `<html>` carries only framework
+  // bookkeeping (lang, data-n-head, our own data-bt-lang test hook). They became
+  // reachable when the walk moved from <body> to document.documentElement, so
+  // the guard is what makes that root safe.
+  const SKIP_ATTR_TAGS = new Set(['LINK', 'META', 'BASE', 'HTML']);
 
   const originalText = new WeakMap();   // text node → original HU value
   const originalAttrs = new WeakMap();  // element → { attr → original HU }
@@ -155,7 +179,9 @@
         node.nodeValue = newVal;
       }
       recordTextWrite(node, newVal);
-      stats.recordHit(trimmed);
+      // Pass the translation so stats can recognise our own output when the
+      // framework re-injects it as a fresh node (Bootstrap's .tooltip-inner).
+      stats.recordHit(trimmed, translated);
     } else {
       if (node.nodeValue !== original) node.nodeValue = original;
       recordTextWrite(node, original);
@@ -164,8 +190,21 @@
   }
 
   function translateAttr(el, attr, translate, stats) {
+    if (SKIP_ATTR_TAGS.has(el.nodeName)) return; // machine values only
     const live = el.getAttribute(attr);
     if (live === null) return;
+    // Nothing to translate right now. Checked BEFORE rememberAttr on purpose, for
+    // two reasons:
+    //  - the framework blanked an attribute we already know (exactly what
+    //    Bootstrap's tooltip _fixTitle() does to `title`): that emptiness is
+    //    current state, not stale content, and writing the original back would
+    //    resurrect a native tooltip the app deliberately suppressed. Returning
+    //    early keeps the remembered Hungarian, which restore-to-Hungarian needs.
+    //  - the attribute was blank the first time we saw it (`:title` bound to a
+    //    value that has not loaded yet): remembering `""` as its original would
+    //    make every later value of that attribute untranslatable, since the
+    //    original is what we look up and `"".trim()` is falsy.
+    if (!live.trim()) return;
     const original = rememberAttr(el, attr, live);
     const trimmed = original.trim();
     if (!trimmed) return;
@@ -175,7 +214,9 @@
         el.setAttribute(attr, translated);
       }
       recordAttrWrite(el, attr, translated);
-      stats.recordHit(trimmed);
+      // Same reason as the text path: Bootstrap stashes this translated `title`
+      // and renders it into .tooltip-inner, where it returns as a new text node.
+      stats.recordHit(trimmed, translated);
     } else {
       if (el.getAttribute(attr) !== original) {
         el.setAttribute(attr, original);
@@ -186,6 +227,7 @@
   }
 
   function translateElementAttrs(el, translate, stats) {
+    if (SKIP_ATTR_TAGS.has(el.nodeName)) return; // machine values only
     for (const attr of TRANSLATABLE_ATTRS) {
       if (el.getAttribute && el.getAttribute(attr) !== null) {
         translateAttr(el, attr, translate, stats);
@@ -245,6 +287,18 @@
         textNodesToProcess.add(m.target);
       } else if (m.type === 'attributes' && TRANSLATABLE_ATTRS.includes(m.attributeName)) {
         if (isOurAttrWrite(m.target, m.attributeName)) continue;
+        // A blank or removed value is a teardown, not new content: Bootstrap's
+        // tooltip _fixTitle() blanks `title` once it has stashed it. Forgetting the
+        // remembered Hungarian original there makes restore-to-Hungarian impossible
+        // for every tooltip target, so keep it and skip the re-walk — a blank value
+        // has nothing to translate anyway.
+        const live = m.target.getAttribute(m.attributeName);
+        if (live === null || !live.trim()) continue;
+        // Genuinely new content: the remembered original is stale, so forget it and
+        // re-translate from what the framework just wrote. Our own output coming
+        // back — _restoreTitle() copying the stash into `title` — is filtered out by
+        // the isOurAttrWrite guard above; adopting it here as the "original" is what
+        // used to freeze an element in one language for the page's whole life.
         const map = originalAttrs.get(m.target);
         if (map) delete map[m.attributeName];
         attrChanges.push([m.target, m.attributeName]);
@@ -280,9 +334,21 @@
     let floodWindowStart = Date.now();
     let destroyed = false;
     let cooldownTimer = null;
+    // Raw disconnect, reached through the prototype so it bypasses the public
+    // `obs.disconnect` own-property below. The circuit-breaker MUST NOT go through
+    // that wrapper: the wrapper is the teardown path and sets `destroyed`, which
+    // would make the cooldown return early and leave the observer dead for the rest
+    // of the page's life — translation would stop for good after one storm, on
+    // exactly the busiest screens. Suspending is not tearing down.
+    const rawDisconnect = () => MutationObserver.prototype.disconnect.call(obs);
 
     const observeOpts = {
       childList: true, subtree: true, characterData: true,
+      // Same list as the mutation branch in processMutations: an attribute we write
+      // while it is unrecognised there would be re-processed as if it were framework
+      // content — a loop. (`value` on button-like INPUTs is translated but not
+      // observed: the framework does not rewrite it, and watching it would report
+      // every keystroke in every text field.)
       attributes: true, attributeFilter: TRANSLATABLE_ATTRS,
     };
 
@@ -294,10 +360,10 @@
       if (floodCount > floodThreshold) {
         paused = true;
         devCounters.circuitBreaks += 1;
-        obs.disconnect();
+        rawDisconnect();                       // suspend — never `destroyed`
         cooldownTimer = setTimeout(() => {
           cooldownTimer = null;
-          if (destroyed) return;
+          if (destroyed) return;               // a caller tore us down meanwhile
           paused = false; floodCount = 0; floodWindowStart = Date.now();
           obs.observe(root, observeOpts);
           walkAndTranslate(root, translate, stats); // resettle after the storm
@@ -320,11 +386,12 @@
     });
 
     obs.observe(root, observeOpts);
-    const _origDisconnect = obs.disconnect.bind(obs);
+    // Public teardown: permanent, and it cancels a pending resettle so a
+    // language switch never leaves a zombie walk racing the new one.
     obs.disconnect = function () {
       destroyed = true;
       if (cooldownTimer) { clearTimeout(cooldownTimer); cooldownTimer = null; }
-      _origDisconnect();
+      rawDisconnect();
     };
     return obs;
   }
