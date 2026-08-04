@@ -179,6 +179,17 @@ async function main() {
       await page
         .waitForLoadState('networkidle', { timeout: 15000 })
         .catch(() => {});
+      // Only the landing route paints immediately; every other one fetches its chunk
+      // and then its data, and the app shell alone is about a dozen strings. A fixed
+      // 3 s pause measured that shell and scored the route a perfect 0, so wait for
+      // the view to actually exist before reading it.
+      await page
+        .waitForFunction(
+          (min) => document.body.innerText.split('\n').filter((l) => l.trim()).length > min,
+          MIN_RENDERED_STRINGS,
+          { timeout: 30000 },
+        )
+        .catch(() => {});
       await page.waitForTimeout(3000);
       // Try scrolling to the bottom to trigger lazy-rendered content.
       await page.evaluate(() => {
@@ -235,7 +246,10 @@ async function main() {
         unmeasured.push(route);
         console.log(`  !! NOT MEASURED — only ${result.length} strings rendered `
           + `(< ${MIN_RENDERED_STRINGS}). The page did not load; this route is not `
-          + `evidence of anything.\n`);
+          + `evidence of anything.`);
+        // Show them: "did not load" is only actionable if you can tell an empty shell
+        // from a login redirect from a permission wall.
+        console.log(`     what was there: ${result.map((s) => JSON.stringify(s)).join(' ')}\n`);
         continue;
       }
       console.log(`  HU-shaped:       ${huStrings.length}`);
