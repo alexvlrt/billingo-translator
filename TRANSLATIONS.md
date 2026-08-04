@@ -33,6 +33,18 @@ Curated notes for non-obvious translation choices in `dict/en.json` and `dict/fr
   automatic scan proposed. Most are not counted units at all (it also proposed `vagy`, `Budapest`
   and `adhatsz`, words that merely followed a number inside a sentence), and the rest are fiscal or
   structural terms where a guessed translation would read as confident and be wrong.
+- 2026-08-04 — **`Vas` is deliberately left untranslated, and `Szo` is not.** A marketplace-page
+  export showed both, the three-letter weekday abbreviations matching the shipped `Sz` → `Sat`
+  and `Va` → `Sun`. `Szo` was added; `Vas` was not, because it is also a Hungarian county
+  (Vas megye) and the walker has no container-level context to tell a calendar header from an
+  address field. A mistranslated county on a NAV-reported invoice address costs more than an
+  untranslated three-letter abbreviation, so a date picker showing `Sam` beside `Vas` is the
+  accepted trade. No county names are dictionary keys, which lowers the risk without removing it.
+  Also added `Itt majd a figyelt partnereid lesznek`, a partner-watch empty state.
+  That page's remaining 115 misses are third-party brand names (Shopify, Revolut, OTP Bank),
+  bank transaction descriptions and image alt text. The structural miss filter cannot touch
+  them: they are letter-bearing words, and any rule broad enough to drop a brand name would
+  drop real UI text with it.
 - 2026-08-04 — **Nine strings from the first real popup miss export.** The inventory screens
   carried six more variants of the `Nincsenek megjeleníthető X!` empty-state family
   (`bevételezések`, `készletek`, `kivételezések`, `leltárívek`, `megrendelések`, `mozgatások`),
