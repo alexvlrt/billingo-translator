@@ -33,6 +33,18 @@ Curated notes for non-obvious translation choices in `dict/en.json` and `dict/fr
   automatic scan proposed. Most are not counted units at all (it also proposed `vagy`, `Budapest`
   and `adhatsz`, words that merely followed a number inside a sentence), and the rest are fiscal or
   structural terms where a guessed translation would read as confident and be wrong.
+- 2026-08-04 — **Nine strings from the first real popup miss export.** The inventory screens
+  carried six more variants of the `Nincsenek megjeleníthető X!` empty-state family
+  (`bevételezések`, `készletek`, `kivételezések`, `leltárívek`, `megrendelések`, `mozgatások`),
+  plus `Bevételezés dátuma`, `Szállító adatok` and `Alkalmaz`. Every value reuses the already
+  reviewed translation of the singular noun — `Bevételezés` → `Goods receipt`, `Kivételezés` →
+  `Goods issue`, `Leltárív` → `Inventory sheet` — so the warehouse vocabulary stays one
+  vocabulary instead of two.
+  The export also listed three classes that must **never** become keys, all present in this one
+  file: grant and tender titles from the tender-monitor feed (`Támogatás szőlőültetvények
+  szerkezetátalakításához…`), which are third-party database content; the account holder's own
+  invoice line items, in French; and names, addresses and VAT numbers. A key for any of them
+  would rewrite real documents.
 - 2026-08-04 — **A 25-route authenticated crawl left six Hungarian strings, and only three were
   ours to translate.** Added `Részben` → `Partially` / `Partiellement` (a payment status),
   `Nincsenek megjeleníthető Lejárt számlák!` — the one variant missing from a family the
