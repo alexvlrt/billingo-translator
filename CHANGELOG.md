@@ -5,6 +5,47 @@ All notable changes to **Translator for Billingo** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.1] — 2026-08-04
+
+No change to what the extension does. This release exists because 1.0.0 shipped without
+usable artifacts, and because installing on Chrome meant living in developer mode.
+
+### Added
+
+- **Permanent Chrome install without the Web Store.** `scripts/crx.mjs` signs the already
+  validated Chrome payload into a CRX3 with the project's own RSA key, and emits
+  `updates.xml` plus a policy bundle for Windows, Linux and macOS. Chrome refuses any
+  extension no policy names, so both usable shapes ship: `ExtensionInstallForcelist`
+  (Chrome fetches, installs and updates it; the user cannot remove it) and
+  `ExtensionInstallAllowlist` (unblocks the ID only, manual install, no auto-update).
+  Forcelist is viable here because this repository is public — Chrome's updater cannot
+  authenticate, so a private repo's release assets would be unreachable to it.
+- The real extension ID is baked into every policy file at build time. A placeholder that
+  reaches a machine fails as an extension that simply never appears, with no error to trace.
+- The CRX3 writer is hand-rolled, like the ZIP writer beside it, and verified byte-for-byte
+  against `google-chrome --pack-extension` on the same key: identical `crx_id`, public key,
+  protobuf field numbers and signature length. 22 tests cover the format, signature
+  verification over a reconstructed payload, and key rejection (non-RSA, undersized, public
+  half, unparseable).
+
+### Fixed
+
+- **A tag push read the workflow from the tagged commit**, so `v1.0.0` — placed on a commit
+  predating `release.yml` — fired nothing at all: no run, no failure, no notification. The
+  only run that did execute was a `workflow_dispatch`, which defaults to a dry run. Between
+  them, the first release produced neither a signed `.xpi` nor a Chrome package. Now
+  documented in the workflow header, where someone about to tag will read it.
+- **`gh release create` failed when the tag already carried a release** — and it ran *after*
+  AMO had signed, so an error at the last step stranded the one artifact that cannot be
+  rebuilt: a signed `.xpi` whose version number is burnt and cannot be reused. It now uploads
+  into the existing release, keeping its notes.
+
+### Changed
+
+- The README leads with the permanent install for both browsers, straight from the release
+  page. Building locally, hand-signing and releasing moved under Development — developer mode
+  was reading as the normal way to install rather than the fallback.
+
 ## [1.0.0] — 2026-08-03
 
 First public release. Nothing before this was ever published, so this entry describes the

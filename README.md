@@ -7,7 +7,7 @@
 **Read the Hungarian [Billingo](https://app.billingo.hu) invoicing UI in English or French — live, in place, no reload.**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-4F46E5.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-1.0.0-4F46E5.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-1.0.1-4F46E5.svg)](CHANGELOG.md)
 [![Manifest V3](https://img.shields.io/badge/Manifest-V3-4F46E5.svg)](manifest.json)
 [![Coverage 97.8%](https://img.shields.io/badge/coverage-97.8%25-4F46E5.svg)](CHANGELOG.md)
 [![Chrome + Firefox](https://img.shields.io/badge/Chrome%20%2B%20Firefox-supported-4F46E5.svg)](#-install)
@@ -129,8 +129,8 @@ npm run package        # no npm install needed — the packaging step has zero d
 | Output | Use |
 | --- | --- |
 | `dist/chrome/`, `dist/firefox/` | unpacked, for `chrome://extensions` → **Load unpacked** and `about:debugging` |
-| `dist/translator-for-billingo-chrome-1.0.0.zip` | Chrome Web Store upload |
-| `dist/translator-for-billingo-firefox-1.0.0.zip` | AMO upload → Mozilla returns a signed `.xpi` |
+| `dist/translator-for-billingo-chrome-<version>.zip` | Chrome Web Store upload |
+| `dist/translator-for-billingo-firefox-<version>.zip` | AMO upload → Mozilla returns a signed `.xpi` |
 
 The payload is an allowlist of exactly the files needed at runtime, and the build refuses to write
 anything when it is inconsistent — a missing content script, an icon or popup asset that would 404,
