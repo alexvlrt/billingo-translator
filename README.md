@@ -48,155 +48,55 @@ obtained and what the remaining 2 % is.
 
 ## 🚀 Install
 
-### 1 · Build the packages
+Everything you need is attached to the [**latest release**](../../releases/latest). Both browsers
+install for good — no developer mode, no folder to keep around, no store account.
 
-```bash
-git clone https://github.com/alexvlrt/billingo-translator.git
-cd billingo-translator
-npm run package        # no npm install needed — the packaging step has zero dependencies
-```
+### 🦊 Firefox / Zen
 
-| Output | Use |
-| --- | --- |
-| `dist/chrome/` | unpacked folder for Chrome's **Load unpacked** |
-| `dist/firefox/` | unpacked folder for Firefox |
-| `dist/translator-for-billingo-chrome-1.0.0.zip` | Chrome Web Store upload |
-| `dist/translator-for-billingo-firefox-1.0.0.zip` | AMO upload → Mozilla returns a **signed `.xpi`** |
-
-The payload is an allowlist of exactly the files needed at runtime, and the build refuses to write
-anything when it is inconsistent — a missing content script, an icon or popup asset that would 404,
-a `web_accessible_resources` pattern matching no file, an ESM `import` that would stop Chrome
-evaluating a content script, or a shard named by `dict/_index.json` and absent in one language.
-
-### 2 · 🌐 Chrome / Edge
-
-1. Copy `dist/chrome/` somewhere **stable** — Chrome reads it from disk on every start, so not a
-   temp directory.
-2. Open `chrome://extensions` → enable **Developer mode** (top right).
-3. **Load unpacked** → select that folder.
-4. Pin **Translator for Billingo** to the toolbar.
-
-> [!TIP]
-> On **Windows + WSL**, copy the folder to a Windows path such as
-> `C:\Users\<you>\billingo-translator-extension\`. A `\\wsl.localhost\…` path breaks the extension
-> whenever WSL is not running.
-
-To update: replace the folder contents and click **Reload**.
-
-<details>
-<summary>Permanent install without the Web Store (signed <code>.crx</code> + policy)</summary>
-
-Developer mode nags on every start and an unpacked folder has to be reloaded by hand. The
-alternative is the `.crx` attached to each [release](../../releases/latest) — signed with the
-project's own key, so its extension ID is stable — plus a one-off policy that tells Chrome to
-accept that ID. Chrome honours these policies on ordinary consumer installs, not just managed
-fleets.
-
-Download `translator-for-billingo-policy.zip` from the release and pick **one** folder:
-
-| Folder | What Chrome does | Auto-update | Removable |
-| --- | --- | --- | --- |
-| `forcelist/` | installs it itself from `updates.xml` | ✅ | ❌ |
-| `allowlist/` | only unblocks the ID; you drop the `.crx` in yourself | ❌ | ✅ |
-
-```bash
-# Windows (admin):  double-click forcelist\windows-chrome.reg
-sudo cp forcelist/linux-chrome.json /etc/opt/chrome/policies/managed/   # Linux
-```
-
-Restart the browser and confirm the policy appears in `chrome://policy` — if it is not listed,
-nothing else will work. For Edge, swap `Google\Chrome` for `Microsoft\Edge` in the registry path.
-
-Building it locally needs the signing key, which is **not** in the repo:
-
-```bash
-openssl genrsa -out crx-key.pem 2048      # keep this OUT of the repo, and back it up
-npm run package && npm run package:crx -- --key crx-key.pem
-```
-
-> [!WARNING]
-> The extension ID is derived from that key. Losing it or rotating it makes a *different*
-> extension: every installed copy stops updating, and the old ID can never be re-issued.
-
-</details>
-
-<details>
-<summary>Via the Chrome Web Store instead</summary>
-
-Upload `dist/translator-for-billingo-chrome-1.0.0.zip` to the
-[Web Store dashboard](https://chrome.google.com/webstore/devconsole) (one-off developer fee).
-Unlisted visibility is available, so publishing does not mean going public.
-
-</details>
-
-### 3 · 🦊 Firefox
-
-> [!NOTE]
-> Firefox only installs extensions **signed by Mozilla**. Signing is free and does not require
-> publishing: AMO's *self-distribution* channel signs your build without ever listing it publicly.
-
-1. Go to [addons.mozilla.org/developers](https://addons.mozilla.org/developers/) → **Submit a New
-   Add-on** → choose **"On your own"** (self-distribution), *not* "On this site".
-2. Upload `dist/translator-for-billingo-firefox-1.0.0.zip`. Automated review usually takes a few
-   minutes.
-3. Download the returned **signed `.xpi`** and open it in Firefox, or drag it onto the window.
-
-Run `npm run lint:ext` beforehand to check the payload with Mozilla's own validator — it should
-report 0 errors and 0 warnings.
-
-<details>
-<summary>Automate the signing with AMO API credentials</summary>
-
-```bash
-npx --yes web-ext@8 sign --source-dir dist/firefox --channel unlisted \
-    --api-key "$AMO_JWT_ISSUER" --api-secret "$AMO_JWT_SECRET"
-```
-
-Get the keys at [addons.mozilla.org/developers/addon/api/key](https://addons.mozilla.org/developers/addon/api/key/).
-
-</details>
-
-<details>
-<summary>Skip signing entirely (Developer Edition / Nightly / ESR only)</summary>
-
-Set `xpinstall.signatures.required` to `false` in `about:config`, then install `dist/firefox/`.
-This does **not** work in release or Beta Firefox.
-
-</details>
+Download the **`.xpi`** and open it in Firefox. It is signed by Mozilla, so it installs like any
+other add-on and stays installed.
 
 > [!IMPORTANT]
-> The manifest requires **Firefox 127+**. Before 127, Firefox did not grant the host permission
-> behind `content_scripts` at install time, so the add-on would install and translate nothing. Zen
-> and other current Firefox forks are well past that floor.
+> Needs **Firefox 127+**. Before 127 Firefox did not grant the host permission behind
+> `content_scripts` at install time, so the add-on would install and translate nothing. Zen and
+> other current forks are well past that floor.
 
-### 4 · Releasing (automated)
+### 🌐 Chrome / Edge
 
-CI signs and publishes on a tag, so the manual steps above are only needed for a first install or
-a local build.
+Chrome refuses any extension that no policy names, so this takes two files instead of one: the
+signed package, and a one-off policy naming its ID. Chrome applies these policies on ordinary
+consumer installs, not just managed fleets.
 
-```bash
-# bump version in BOTH manifest.json and package.json, then:
-git tag v1.0.1 && git push origin v1.0.1
-```
+1. Download **`translator-for-billingo-policy.zip`**.
+2. Unzip it and deploy **one** of the two folders — admin rights, once per machine:
 
-[`.github/workflows/release.yml`](.github/workflows/release.yml) then tests, builds, lints, signs
-the Firefox add-on through AMO, optionally publishes the Chrome update, and attaches both
-artifacts to a GitHub Release. `workflow_dispatch` runs a **dry run** by default — signing burns an
-AMO version number, and a burnt version cannot be reused.
+   | | Auto-updates | You can remove it | Also download the `.crx` |
+   | --- | --- | --- | --- |
+   | **`forcelist/`** *(recommended)* — Chrome fetches and installs it for you | ✅ | ❌ | no |
+   | `allowlist/` — only unblocks the ID, you install it yourself | ❌ | ✅ | yes, drag it onto `chrome://extensions` |
 
-| Secret | For | Required |
-| --- | --- | --- |
-| `AMO_JWT_ISSUER`, `AMO_JWT_SECRET` | Firefox signing — [get them here](https://addons.mozilla.org/developers/addon/api/key/) | ✅ |
-| `CHROME_CLIENT_ID`, `CHROME_CLIENT_SECRET`, `CHROME_REFRESH_TOKEN`, `CHROME_EXTENSION_ID`, `CHROME_PUBLISHER_ID` | Chrome Web Store publish | ❌ — the step skips itself when absent |
-| `CRX_PRIVATE_KEY` | the self-signed `.crx`, its `updates.xml` and the policy bundle (PEM contents, `openssl genrsa 2048`) | ❌ — the step skips itself when absent |
+   ```bash
+   # Windows, as admin — double-click, or:
+   reg import forcelist\windows-chrome.reg
+   # Linux
+   sudo cp forcelist/linux-chrome.json /etc/opt/chrome/policies/managed/
+   # macOS — install forcelist/macos-chrome.plist as a configuration profile
+   ```
 
-> [!NOTE]
-> Chrome has **no signing step**: the Web Store signs on publish, and its API can only *update* an
-> existing item. The listing has to be created once by hand in the dashboard before CI can push
-> updates to it.
+   Edge uses the same files with `Microsoft\Edge` in place of `Google\Chrome`.
 
-The `browser_specific_settings.gecko.id` in the manifest is what makes Firefox treat each build as
-the same add-on, so your stored language survives updates.
+3. Restart the browser and check **`chrome://policy`**. If the policy is not listed there, nothing
+   else will work.
+
+`README.txt` inside the zip repeats all of this, offline.
+
+<details>
+<summary>Chrome Web Store instead</summary>
+
+The Web Store listing does not exist yet. Publishing there needs a one-off developer fee; unlisted
+visibility is available, so it would not mean going public.
+
+</details>
 
 ## 🎯 Usage
 
@@ -215,10 +115,85 @@ translations.
 
 ```bash
 npm install     # jsdom, acorn, playwright — needed by the tests
-npm test        # 291 tests, node:test
+npm test        # 313 tests, node:test
 ```
 
 No bundler, no build step for the extension itself: `dist/` is a filtered copy.
+
+### Building locally
+
+```bash
+npm run package        # no npm install needed — the packaging step has zero dependencies
+```
+
+| Output | Use |
+| --- | --- |
+| `dist/chrome/`, `dist/firefox/` | unpacked, for `chrome://extensions` → **Load unpacked** and `about:debugging` |
+| `dist/translator-for-billingo-chrome-1.0.0.zip` | Chrome Web Store upload |
+| `dist/translator-for-billingo-firefox-1.0.0.zip` | AMO upload → Mozilla returns a signed `.xpi` |
+
+The payload is an allowlist of exactly the files needed at runtime, and the build refuses to write
+anything when it is inconsistent — a missing content script, an icon or popup asset that would 404,
+a `web_accessible_resources` pattern matching no file, an ESM `import` that would stop Chrome
+evaluating a content script, or a shard named by `dict/_index.json` and absent in one language.
+
+For a loaded-from-disk Chrome build, copy `dist/chrome/` somewhere **stable** first — Chrome reads
+it on every start. On Windows + WSL that means a Windows path such as
+`C:\Users\<you>\billingo-translator-extension\`; a `\\wsl.localhost\…` path breaks whenever WSL is
+not running.
+
+<details>
+<summary>Signing the two packages by hand</summary>
+
+```bash
+# Firefox — AMO signs it without listing it publicly ("self-distribution")
+npx --yes web-ext@8 sign --source-dir dist/firefox --channel unlisted \
+    --api-key "$AMO_JWT_ISSUER" --api-secret "$AMO_JWT_SECRET"
+
+# Chrome — our own key, which also produces updates.xml and the policy bundle
+openssl genrsa -out crx-key.pem 2048       # keep this OUT of the repo, and back it up
+npm run package:crx -- --key crx-key.pem
+```
+
+Run `npm run lint:ext` before submitting to AMO: Mozilla's own validator should report 0 errors and
+0 warnings. On Developer Edition / Nightly / ESR you can skip signing altogether by setting
+`xpinstall.signatures.required` to `false` in `about:config` and loading `dist/firefox/`.
+
+> [!WARNING]
+> The Chrome extension ID is derived from the signing key. Losing it or rotating it produces a
+> *different* extension: every installed copy stops updating, and the old ID can never be
+> re-issued.
+
+</details>
+
+### Releasing
+
+Pushing a `v*` tag is the whole release process.
+
+```bash
+# bump the version in BOTH manifest.json and package.json, then:
+git tag v1.0.1 && git push origin v1.0.1
+```
+
+[`.github/workflows/release.yml`](.github/workflows/release.yml) tests, builds, lints, signs the
+Firefox add-on through AMO, packs the Chrome `.crx` with its policies, optionally publishes to the
+Web Store, and attaches everything to the GitHub Release. `workflow_dispatch` runs a **dry run** by
+default — signing burns an AMO version number, and a burnt version cannot be reused.
+
+| Secret | For | Required |
+| --- | --- | --- |
+| `AMO_JWT_ISSUER`, `AMO_JWT_SECRET` | Firefox signing — [get them here](https://addons.mozilla.org/developers/addon/api/key/) | ✅ |
+| `CRX_PRIVATE_KEY` | the Chrome `.crx`, `updates.xml` and the policy bundle (PEM contents) | ❌ — the step skips itself when absent |
+| `CHROME_CLIENT_ID`, `CHROME_CLIENT_SECRET`, `CHROME_REFRESH_TOKEN`, `CHROME_EXTENSION_ID`, `CHROME_PUBLISHER_ID` | Chrome Web Store publish | ❌ — the step skips itself when absent |
+
+> [!IMPORTANT]
+> A tag push runs the workflow **from the tagged commit**, not from `main`. Tagging a commit older
+> than `release.yml` fires nothing at all — no run, no failure, no notification.
+
+Two identity fields make updates work rather than installing a second copy of the extension:
+`browser_specific_settings.gecko.id` on Firefox, and the CRX signing key on Chrome. Neither may
+change between versions. Chrome has no signing step for the Web Store — it signs on publish, and
+its API can only *update* an existing item, so that listing has to be created by hand first.
 
 ### Repository layout
 
@@ -247,8 +222,9 @@ Two halves with **different rules** — conflating them is the easiest mistake t
 ### Commands
 
 ```bash
-npm test                            # the whole suite (291 tests)
+npm test                            # the whole suite (313 tests)
 npm run package                     # dist/{chrome,firefox} + one zip each, validated
+npm run package:crx -- --key <pem>  # signed .crx + updates.xml + policy bundle
 npm run lint:ext                    # Mozilla web-ext lint over dist/firefox (via npx)
 
 node tools/build-shards.js          # dict/{en,fr}.json -> dict/<lang>/<zone>.json
