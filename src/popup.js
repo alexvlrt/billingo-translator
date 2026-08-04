@@ -99,7 +99,12 @@
     // The headline count is the number the tab really saw, which can exceed the
     // exportable list when the content script capped it.
     const n = v.missTotal;
-    setText(missCountEl, n === 0 ? '' : `${n} untranslated`); // separator is CSS
+    // Say how many are plausibly ours. Most of a marketplace or transaction screen's
+    // misses are third-party brand names, so a bare total reads as far worse coverage
+    // than the extension actually delivers.
+    const likely = countLikelyHungarian(v.misses);
+    const label = likely === n ? `${n} untranslated` : `${likely} of ${n} untranslated`;
+    setText(missCountEl, n === 0 ? '' : label); // separator is CSS
     missCountEl.hidden = n === 0;
   }
 
@@ -153,12 +158,32 @@
     });
   }
 
+  const HU_DIACRITIC = /[őűáéíóöúüŐŰÁÉÍÓÖÚÜ]/;
+
+  // A Hungarian diacritic is the one cheap signal that a miss is ours rather than a
+  // third-party brand: a marketplace page exported 122 strings of which 115 were
+  // Shopify, Revolut, OTP Bank and the like, and only 7 carried a diacritic.
+  //
+  // It orders, it does NOT filter. Dropping the accent-less strings would have cut that
+  // page by 94 %, but `Alkalmaz` and `Szo` carry no diacritic and both became dictionary
+  // entries the day this was written. Capture already cannot see accent-less Hungarian,
+  // so this export is the only place it can ever surface: hiding it here would close that
+  // gap nowhere. Read the list until it turns into brand names, then stop.
+  function likelyHungarianFirst(a, b) {
+    const rank = (s) => (HU_DIACRITIC.test(s) ? 0 : 1);
+    return rank(a) - rank(b) || a.localeCompare(b, 'hu');
+  }
+
   // Deduped (an older content script may not) and sorted, so two exports of the
   // same screen diff cleanly when the strings are harvested into the dictionary.
   function readMisses(raw) {
     if (!Array.isArray(raw)) return [];
     const strings = raw.filter((s) => typeof s === 'string' && s !== '');
-    return [...new Set(strings)].sort((a, b) => a.localeCompare(b, 'hu'));
+    return [...new Set(strings)].sort(likelyHungarianFirst);
+  }
+
+  function countLikelyHungarian(strings) {
+    return strings.reduce((n, s) => n + (HU_DIACRITIC.test(s) ? 1 : 0), 0);
   }
 
   // Distinct misses the tab actually saw. The content script caps the list it
@@ -247,6 +272,10 @@
       truncated: v.truncated,
       count: v.misses.length, // strings in this file
       distinctSeen: v.missTotal, // distinct misses the tab saw, before any cap
+      // How many of `strings` carry a Hungarian diacritic. They come first, so this is
+      // also the index where the list stops being worth reading: past it are brand names,
+      // bank transaction labels and accent-less strings that may or may not be ours.
+      likelyHungarian: countLikelyHungarian(v.misses),
       strings: v.misses,
     };
   }
