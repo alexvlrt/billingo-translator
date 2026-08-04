@@ -5,6 +5,53 @@ All notable changes to **Translator for Billingo** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.2] — 2026-08-04
+
+Coverage work, driven for the first time by measuring the rendered DOM instead of the
+string catalog. Twenty-four dictionary keys, and two measurement tools that had been
+reporting confident nonsense.
+
+Coverage on screen is now **99.7 %**: 2,304 strings rendered across 25 authenticated
+pages, 6 left in Hungarian, of which 3 are a partner company's name on real bank
+transactions and will never be translated.
+
+### Added
+
+- Counted units are covered by placeholder keys rather than enumeration. `28 nap` rendered
+  untranslated while `28 nap múlva` was fine, because the dictionary held
+  `:due_days nap múlva` — which the pattern layer generalises to any number — and nothing
+  for the bare noun. Ten placeholder keys plus their singular forms close the families for
+  every value: days, months, years, hours, working days, characters, and the
+  `N db kimenő/bejövő számla` counters.
+- `Részben`, `Nincsenek megjeleníthető Lejárt számlák!`, `Céginfo, Partnerfigyelő` and
+  `Utolsó szinkron (:current/:total):`, all found by crawling the live app.
+
+### Fixed
+
+- `:month hónap` was singular and competed with `:months hónap`. Both ship in Billingo's
+  catalog and compile to the same pattern shape, so which won was arbitrary and `2 hónap`
+  came out as `2 month`.
+- **`tools/diagnose-extension.js` was measuring a browser with no extension in it.** It
+  pinned a Playwright Chromium path that an upgrade had garbage-collected; the fallback
+  resolved to `chrome-headless-shell`, which ignores `--load-extension` silently. Every run
+  reported all 306 visible Hungarian strings as defects. It now resolves the newest full
+  Chromium and refuses to start when only the headless shell is present.
+- The same tool scored a page that never rendered as fully translated. A sweep of 28 routes
+  came back "zero Hungarian" while almost every page had failed to load, all returning the
+  same 12 app-shell strings. Routes below a rendered-string floor are now refused rather
+  than scored, the summary states how many were measured out of how many were asked for,
+  and an unmeasurable page is dumped verbatim — which is how the 404s were spotted: the
+  routes came from grepping `tools/zones.js`, whose entries are zone prefixes for matching,
+  not navigable URLs.
+
+### Changed
+
+- The README is a public-facing document: the release runbook and capture methodology moved
+  out, and the single coverage claim became the two figures it had been conflating. 97.8 %
+  measured the dictionary against the extracted catalog while the text presented it as "the
+  text Billingo actually renders" — which it is not, since the catalog holds templates and
+  the DOM renders instances.
+
 ## [1.0.1] — 2026-08-04
 
 No change to what the extension does. This release exists because 1.0.0 shipped without

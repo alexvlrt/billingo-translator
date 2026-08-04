@@ -7,7 +7,7 @@
 **Read the Hungarian [Billingo](https://app.billingo.hu) invoicing UI in English or French: live, in place, no reload.**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-4F46E5.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-1.0.1-4F46E5.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-1.0.2-4F46E5.svg)](CHANGELOG.md)
 [![Manifest V3](https://img.shields.io/badge/Manifest-V3-4F46E5.svg)](manifest.json)
 [![Coverage 99.7%](https://img.shields.io/badge/coverage-99.7%25%20on%20screen-4F46E5.svg)](#-why)
 [![Chrome + Firefox](https://img.shields.io/badge/Chrome%20%2B%20Firefox-supported-4F46E5.svg)](#-install)
@@ -43,10 +43,10 @@ Of those 6 remaining strings, **3 have since been added** and 3 are deliberately
 are a partner company's name on real bank transactions. Rewriting user data would corrupt your
 accounts, which is worse than leaving a word in Hungarian.
 
-Both numbers are reproducible: `node tools/diagnose-extension.js <cookie-jar> <routes>` loads the
-extension into a real browser and reports what is still Hungarian. Neither number covers modals,
-validation errors or toasts, which need a click to appear. The crawler stays strictly read-only
-against a production NAV-connected account and never clicks anything.
+Both numbers are reproducible with `tools/diagnose-extension.js`, which loads the extension into a
+real browser and reports what is still Hungarian. Neither number covers modals, validation errors or
+toasts, which need a click to appear: the measurement is strictly read-only and never clicks
+anything.
 
 ## ✨ Features
 
@@ -238,19 +238,6 @@ popup. That list is exactly what the dictionary lacks on the screens you actuall
 `dict/_rejected.json` is a committed denylist of strings that must never become keys (foreign date
 locales, dev doc comments, internal fixtures). Adding an entry is a documented decision; without
 it, the next capture resurrects the same garbage.
-
-### Where the strings come from
-
-`tools/` can rebuild the candidate list from the app itself. `tools/extract-bundle.js` needs a
-Netscape cookie jar for an authenticated session, used only to fetch the app shell, since the Nuxt
-chunks themselves are public. It yields Billingo's own Hungarian message catalog, the authoritative
-inventory of everything the UI can display.
-
-> [!CAUTION]
-> `app.billingo.hu` is a **production invoicing app wired to NAV**, the Hungarian tax authority.
-> not a sandbox. Capture tooling must stay strictly **read-only**: navigate by URL, open dropdowns,
-> then Escape. Never click a commit control: no document issue, no draft save, no wizard "Tovább"
-> (it can start a real bank link), no delete or confirm.
 
 ### Testing
 
