@@ -33,6 +33,16 @@ Curated notes for non-obvious translation choices in `dict/en.json` and `dict/fr
   automatic scan proposed. Most are not counted units at all (it also proposed `vagy`, `Budapest`
   and `adhatsz`, words that merely followed a number inside a sentence), and the rest are fiscal or
   structural terms where a guessed translation would read as confident and be wrong.
+- 2026-08-04 — **A 25-route authenticated crawl left six Hungarian strings, and only three were
+  ours to translate.** Added `Részben` → `Partially` / `Partiellement` (a payment status),
+  `Nincsenek megjeleníthető Lejárt számlák!` — the one variant missing from a family the
+  dictionary already covers, worded to match the shipped `Lejárt számlák` → `Expired invoices`
+  rather than the more natural "overdue" — and `Céginfo, Partnerfigyelő`, a composite whose two
+  halves were already translated separately but which the separator layer does not split on a
+  comma. The other three (`Példa Tanácsadó Kft.`, `To Példa Tanácsadó Kft.`, `Fee for To
+  Példa Tanácsadó Kft.`) are a real partner's name on real bank transactions: user data, left
+  alone deliberately. They are the visible edge of the layer 7/8 hazard already documented in
+  CLAUDE.md — a dictionary that reached into them would rewrite the accounts.
 - 2026-08-04 — **Two more counted composites, found by sweeping the live DOM.** `0 db kimenő
   számla` and `Utolsó szinkron (1/4):` were the only Hungarian left across 13 authenticated
   screens. Both are the `28 nap` shape: the catalog holds `__PCS__ db kimenő számla`, whose
