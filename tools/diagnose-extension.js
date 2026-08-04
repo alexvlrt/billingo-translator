@@ -67,6 +67,10 @@ const ROUTES = process.argv[3]
       '/n/bob/connection-wizard/3',
     ];
 
+// The app shell alone renders about a dozen strings, so anything at or below this
+// is a page that failed to load rather than a page with nothing to translate.
+const MIN_RENDERED_STRINGS = 20;
+
 // Detection: a string is "potentially HU" if either (a) it has a Hungarian
 // diacritic, or (b) it is a known HU source string in our dict (proof we
 // already saw it as HU during catalog extraction).
@@ -159,6 +163,7 @@ async function main() {
   let totalNotInDict = 0;
   const allDictHits = new Set();
   const allMisses = new Set();
+  const unmeasured = [];
 
   const page = await context.newPage();
 
@@ -221,6 +226,18 @@ async function main() {
 
       console.log(`## ${route}`);
       console.log(`  visible strings: ${result.length}`);
+      // A page that never rendered has nothing untranslated on it, so it scores a
+      // perfect 0 and quietly inflates a clean sweep. On a flaky link (WSL throws
+      // ERR_NETWORK_CHANGED) every route came back with the same 12 strings — the
+      // app shell — and the run read as "everything is translated". Refuse to score
+      // a page that plainly did not load.
+      if (result.length < MIN_RENDERED_STRINGS) {
+        unmeasured.push(route);
+        console.log(`  !! NOT MEASURED — only ${result.length} strings rendered `
+          + `(< ${MIN_RENDERED_STRINGS}). The page did not load; this route is not `
+          + `evidence of anything.\n`);
+        continue;
+      }
       console.log(`  HU-shaped:       ${huStrings.length}`);
       console.log(`  dict hits still in HU (BUG): ${dictHitsStillHu.length}`);
       console.log(`  NOT in dict (coverage gap):   ${notInDict.length}`);
@@ -243,9 +260,17 @@ async function main() {
   }
 
   console.log('# Summary');
+  console.log(`  Routes measured: ${ROUTES.length - unmeasured.length} / ${ROUTES.length}`);
   console.log(`  HU-shaped strings seen across all pages: ${totalHuFound}`);
   console.log(`  Dict-hit-but-still-HU (BUG):              ${totalDictHits} unique=${allDictHits.size}`);
   console.log(`  Not-in-dict (coverage gap):               ${totalNotInDict} unique=${allMisses.size}`);
+  if (unmeasured.length) {
+    // Loud and last, because "0 untranslated" over a handful of routes that never
+    // rendered is the most confident wrong answer this tool can give.
+    console.log(`\n  !! ${unmeasured.length} route(s) did not render and were NOT measured:`);
+    console.log(`     ${unmeasured.join(', ')}`);
+    console.log('     A zero above covers only the routes that actually loaded.');
+  }
 
   const summary = {
     pages: ROUTES.length,
