@@ -33,6 +33,15 @@ Curated notes for non-obvious translation choices in `dict/en.json` and `dict/fr
   automatic scan proposed. Most are not counted units at all (it also proposed `vagy`, `Budapest`
   and `adhatsz`, words that merely followed a number inside a sentence), and the rest are fiscal or
   structural terms where a guessed translation would read as confident and be wrong.
+- 2026-08-04 — **Two more counted composites, found by sweeping the live DOM.** `0 db kimenő
+  számla` and `Utolsó szinkron (1/4):` were the only Hungarian left across 13 authenticated
+  screens. Both are the `28 nap` shape: the catalog holds `__PCS__ db kimenő számla`, whose
+  placeholder is never substituted at runtime — it is in `dict/_rejected.json` for exactly that
+  reason — so no captured key could ever match what the DOM renders. Added `:count db kimenő
+  számla` / `:count db bejövő számla` with their `1 db …` singulars, following the existing
+  `Bejövő számlák` → `Incoming invoices` / `Factures entrantes`, and
+  `Utolsó szinkron (:current/:total):`. French keeps the space before the colon, which the
+  language-aware translator composes on its own.
 - 2026-08-04 — **`:month hónap` was singular and competed with `:months hónap`.** Both keys exist in
   Billingo's catalog and compile to the same pattern shape, so which one won was arbitrary and
   `2 hónap` came out as `2 month`. The EN value of `:month hónap` is now `:month months`; the exact

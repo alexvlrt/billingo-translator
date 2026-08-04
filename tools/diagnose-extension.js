@@ -55,9 +55,11 @@ function parseNetscapeJar(p) {
   return out;
 }
 
-// Default: just the wizard for fast iteration. Override with CLI arg.
+// Default: just the wizard for fast iteration. Override with a CLI arg — a comma
+// separated list, so a full sweep reuses one browser instead of paying the ~30 s
+// Chromium launch once per route.
 const ROUTES = process.argv[3]
-  ? [process.argv[3]]
+  ? process.argv[3].split(',').map((r) => r.trim()).filter(Boolean)
   : [
       '/n/bob/connection-wizard',
       '/n/bob/connection-wizard/1',
