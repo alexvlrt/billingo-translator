@@ -143,6 +143,15 @@ These exist because a naive implementation froze the real Billingo app. Changing
 - **Flood circuit-breaker** (`FLOOD_THRESHOLD` records/s → disconnect, cooldown, resettle).
 - **Empty dictionary value means miss**, never blank output — an untranslated key
   (`""`) must leave the Hungarian text visible. This holds at every lookup layer.
+- **`recordMiss` only counts what could be text** (`isReportableMiss`). Amounts, UUIDs,
+  dates, lone punctuation and truncated fragments are not untranslated strings: counting
+  them made the popup export 57 % noise on a real page (169 of 310) and understated the
+  coverage percentage, which is derived from `misses`. The rule is **structural, never
+  semantic** — strip digits, separators, currency symbols and currency codes, then require
+  a surviving two-letter run (or a standalone single letter, which is a real label like
+  `x`). Names are deliberately **not** filtered: `Példa Péter` and `Szállító adatok` are
+  both two Hungarian-looking words, so a rule that dropped one would hide real UI text.
+  Accent-less Hungarian must keep being reported, since capture already cannot see it.
 
 ### Lookup layers (`src/translator.js`)
 

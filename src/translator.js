@@ -501,6 +501,44 @@
   // quietly returns for the strings that no longer fit.
   const EMITTED_CAP = 12000;
 
+  // --- what counts as a miss ------------------------------------------------
+
+  // Everything the translator could not render used to be recorded as a miss, which meant
+  // amounts, UUIDs, dates and lone punctuation. On one real inventory page that was 169 of
+  // 310 exported strings: the export is the only feedback loop from usage back into the
+  // dictionary, and the signal was 3 % of the file. It also depressed the coverage
+  // percentage the popup shows, since `misses` feeds it.
+  //
+  // The test is deliberately structural, never semantic. Strip digits, separators,
+  // currency symbols and currency codes; if no run of two or more letters survives, the
+  // string cannot be a word in any language, so it is not something we failed to
+  // translate. A person's or company's name is NOT filtered: `Példa Péter` and
+  // `Szállító adatok` are both two Hungarian-looking words, and a rule that dropped one
+  // would drop real UI text with it. Guessing wrong there hides strings we need; leaving a
+  // name in the export costs the reader a glance.
+  const CURRENCY_CODE = /\b(?:Ft|HUF|EUR|USD|GBP|CHF|RON|PLN|CZK)\b/gi;
+  const NON_WORD_CHARS = /[\d\s.,;:!?=+\-*/\\|()[\]{}<>«»"'’…%×€$£¥&#@~^°]/g;
+  const TWO_LETTER_RUN = /\p{L}{2,}/u;
+  // A string the UI itself cut short is never a dictionary key: the dictionary holds the
+  // whole value, so the fragment can only ever miss.
+  const VISUALLY_TRUNCATED = /^(?:\.{3}|…)|(?:\.{3}|…)$/;
+  const EMAIL_OR_URL = /^(?:\S+@\S+\.\S+|(?:https?:\/\/|www\.)\S+)$/i;
+
+  function isReportableMiss(text) {
+    if (typeof text !== 'string') return false;
+    const trimmed = text.trim();
+    if (trimmed === '') return false;
+    if (VISUALLY_TRUNCATED.test(trimmed)) return false;
+    if (EMAIL_OR_URL.test(trimmed)) return false;
+    // A label that IS one letter ('x' on a close button) is real text and is kept. A lone
+    // letter inside something else ('D02 T380', an Eircode) is not. Measured against a
+    // real 310-string export, that distinction is the only thing the two-letter rule
+    // would otherwise have discarded, and it was the postcode.
+    if (trimmed.length === 1) return LETTER.test(trimmed);
+    const words = trimmed.replace(CURRENCY_CODE, ' ').replace(NON_WORD_CHARS, ' ');
+    return TWO_LETTER_RUN.test(words);
+  }
+
   function createStats() {
     const emitted = new Set(); // translations we produced, verbatim
     const stats = {
@@ -522,6 +560,9 @@
         // English/French strings into the exported "untranslated Hungarian" list,
         // which made that export useless for dictionary work.
         if (emitted.has(text)) return;
+        // Amounts, identifiers and punctuation are not untranslated text, and counting
+        // them made both the export and the coverage percentage wrong.
+        if (!isReportableMiss(text)) return;
         stats.misses += 1;
         stats.uniqueMisses.add(text);
       },
@@ -538,4 +579,7 @@
   globalThis.BillingoTranslator = globalThis.BillingoTranslator || {};
   globalThis.BillingoTranslator.createTranslator = createTranslator;
   globalThis.BillingoTranslator.createStats = createStats;
+  // Exposed for the tests: the rule decides both what the popup exports and what the
+  // coverage percentage is computed from, so it needs assertions of its own.
+  globalThis.BillingoTranslator.isReportableMiss = isReportableMiss;
 })();

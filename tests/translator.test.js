@@ -88,7 +88,10 @@ test('createStats: reset forgets remembered output too', () => {
 test('createStats: reset clears all counters', () => {
   const s = createStats();
   s.recordHit('A');
-  s.recordMiss('B');
+  s.recordMiss('Bezár');
+  // recordMiss now filters strings that cannot be text, so assert the miss landed before
+  // reset clears it — otherwise this test would pass on 0 === 0 and prove nothing.
+  assert.equal(s.misses, 1, 'precondition: the miss was actually recorded');
   s.reset();
   assert.equal(s.hits, 0);
   assert.equal(s.misses, 0);
