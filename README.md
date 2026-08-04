@@ -7,7 +7,7 @@
 **Read the Hungarian [Billingo](https://app.billingo.hu) invoicing UI in English or French: live, in place, no reload.**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-4F46E5.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-1.0.2-4F46E5.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-1.0.3-4F46E5.svg)](CHANGELOG.md)
 [![Manifest V3](https://img.shields.io/badge/Manifest-V3-4F46E5.svg)](manifest.json)
 [![Coverage 99.7%](https://img.shields.io/badge/coverage-99.7%25%20on%20screen-4F46E5.svg)](#-why)
 [![Chrome + Firefox](https://img.shields.io/badge/Chrome%20%2B%20Firefox-supported-4F46E5.svg)](#-install)

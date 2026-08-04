@@ -5,6 +5,40 @@ All notable changes to **Translator for Billingo** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.3] — 2026-08-04
+
+Released to get a dictionary without account data into users' browsers. **The 1.0.0,
+1.0.1 and 1.0.2 packages should not be used**: they contain a dictionary key carrying a
+real account's profile ID.
+
+### Fixed
+
+- **`Profil azonosító: 237-175` was a dictionary key holding a real profile ID**, shipped
+  since the first dictionary commit. As a key it could only ever match that one account,
+  so `Profil azonosító: :id` is both the privacy fix and the correct behaviour: it now
+  matches every account. The repository history was rewritten to remove the number, and
+  the earlier releases' assets were withdrawn, since a published `.zip`, `.crx` and `.xpi`
+  all embed `dict/en.json`.
+- Documentation and test fixtures that had been copied verbatim out of a live miss export
+  — a partner company's name, a person's name and a bank account number — replaced with
+  synthetic values. Checked and kept: the NAV and MKIK account numbers, `info@pentech.hu`
+  and `HU00123456780000000012345678` are public institutional details and a format example
+  from Billingo's own help text.
+
+### Added
+
+- The popup export orders the misses that are plausibly ours first, and says "7 of 122
+  untranslated" rather than "122". A marketplace screen's misses are almost entirely
+  third-party brand names, and the bare total read as far worse coverage than the
+  extension delivers. It orders rather than filters: `Alkalmaz` and `Szo` carry no
+  diacritic and both became dictionary entries.
+- Thirteen keys since 1.0.2, from two real exports: six more `Nincsenek megjeleníthető X!`
+  inventory empty states, `Bevételezés dátuma`, `Szállító adatok`, `Alkalmaz`, `Szo`,
+  `Itt majd a figyelt partnereid lesznek`, `Részben` and `Céginfo, Partnerfigyelő`.
+- `recordMiss` no longer counts what cannot be text. A real export was 57 % amounts,
+  UUIDs, dates and lone punctuation, which buried the signal and understated the coverage
+  percentage.
+
 ## [1.0.2] — 2026-08-04
 
 Coverage work, driven for the first time by measuring the rendered DOM instead of the
