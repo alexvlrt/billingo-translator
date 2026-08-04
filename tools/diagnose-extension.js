@@ -86,16 +86,38 @@ function isLikelyHu(s) {
   return false;
 }
 
+// `chrome-headless-shell` IGNORES --load-extension, without a warning: the run then
+// measures a browser with no extension and reports every translated string as a bug.
+// This whole tool once produced a 76-entry "bug list" that way, because the path it
+// pinned (chromium-1208) had been garbage-collected by a playwright upgrade and the
+// fallback was `undefined` — which resolves to the headless shell. So: find the FULL
+// browser, take the newest build, and refuse to run rather than measure nothing.
+function resolveFullChromium() {
+  const root = path.join(process.env.HOME ?? '', '.cache/ms-playwright');
+  const builds = fs.existsSync(root)
+    ? fs.readdirSync(root)
+      // chromium_headless_shell-* also starts with "chromium", hence the dash.
+      .filter((d) => /^chromium-\d+$/.test(d))
+      .map((d) => ({ dir: d, build: Number(d.split('-')[1]) }))
+      .sort((a, b) => b.build - a.build)
+    : [];
+  for (const { dir } of builds) {
+    const exe = path.join(root, dir, 'chrome-linux64/chrome');
+    if (fs.existsSync(exe)) return exe;
+  }
+  throw new Error(
+    'no full Chromium found under ~/.cache/ms-playwright (only the headless shell, '
+    + 'which silently ignores --load-extension). Run: npx playwright install chromium');
+}
+
 async function main() {
   const cookies = parseNetscapeJar(cookieJarPath);
-  const cachedChromium =
-    '/home/alex/.cache/ms-playwright/chromium-1208/chrome-linux64/chrome';
   const profileDir = '/tmp/bt-diag-profile';
   fs.rmSync(profileDir, { recursive: true, force: true });
 
   const context = await chromium.launchPersistentContext(profileDir, {
     headless: true,
-    executablePath: fs.existsSync(cachedChromium) ? cachedChromium : undefined,
+    executablePath: resolveFullChromium(),
     args: [
       `--disable-extensions-except=${PROJECT_DIR}`,
       `--load-extension=${PROJECT_DIR}`,
