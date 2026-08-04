@@ -4,7 +4,7 @@
 
 # Translator for Billingo
 
-**Read the Hungarian [Billingo](https://app.billingo.hu) invoicing UI in English or French — live, in place, no reload.**
+**Read the Hungarian [Billingo](https://app.billingo.hu) invoicing UI in English or French: live, in place, no reload.**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-4F46E5.svg)](LICENSE)
 [![Version](https://img.shields.io/badge/version-1.0.1-4F46E5.svg)](CHANGELOG.md)
@@ -17,7 +17,7 @@
 </div>
 
 > [!IMPORTANT]
-> **Unofficial extension.** An independent, community-built tool — **not affiliated with, endorsed by, or connected to Billingo** or its operators. "Billingo" is a trademark of its respective owner, used here only to describe what the extension does.
+> **Unofficial extension.** An independent, community-built tool, **not affiliated with, endorsed by, or connected to Billingo** or its operators. "Billingo" is a trademark of its respective owner, used here only to describe what the extension does.
 
 ---
 
@@ -28,7 +28,7 @@ non-Hungarian-speaking founder, accountant or freelancer who has to use it, ever
 guessing game. This extension overlays a **hand-curated English or French translation** on the live
 UI so you can read what you are clicking.
 
-Coverage is measured, not claimed — and measured two ways, because they answer different questions:
+Coverage is measured, not claimed, and measured two ways, because they answer different questions:
 
 | | Result | What it means |
 | --- | --- | --- |
@@ -36,8 +36,8 @@ Coverage is measured, not claimed — and measured two ways, because they answer
 | **Against the catalog** | **99.96 %** | 7,300 of the 7,303 reachable Hungarian strings mined from Billingo's own Nuxt bundle. |
 
 The on-screen figure is the honest one, and the harder of the two: the catalog holds *templates*,
-the DOM renders *instances*. `28 nap` appears on screen but exists nowhere in the catalog — Vue
-composes it at render time from a number and a word — so catalog coverage is blind to it.
+the DOM renders *instances*. `28 nap` appears on screen but exists nowhere in the catalog, because Vue
+composes it at render time from a number and a word, so catalog coverage is blind to it.
 
 Of those 6 remaining strings, **3 have since been added** and 3 are deliberately left alone: they
 are a partner company's name on real bank transactions. Rewriting user data would corrupt your
@@ -45,7 +45,7 @@ accounts, which is worse than leaving a word in Hungarian.
 
 Both numbers are reproducible: `node tools/diagnose-extension.js <cookie-jar> <routes>` loads the
 extension into a real browser and reports what is still Hungarian. Neither number covers modals,
-validation errors or toasts, which need a click to appear — the crawler stays strictly read-only
+validation errors or toasts, which need a click to appear. The crawler stays strictly read-only
 against a production NAV-connected account and never clicks anything.
 
 ## ✨ Features
@@ -57,7 +57,7 @@ against a production NAV-connected account and never clicks anything.
 | 🧩 **Route-aware dictionary** | Sharded per app section: the current page's shard loads first, the rest arrive once the page is idle, so modals and banners from other sections are covered too. |
 | 🔁 **SPA-aware** | Follows Billingo's in-app navigation and dynamically rendered content. |
 | 🧠 **Beyond exact matches** | Eight lookup layers handle indentation, trailing punctuation, casing, `:token` templates (`:type letöltése` → `Télécharger la facture`), numbers (`17 db` → `17 pièces`), parentheses and separators. |
-| 🧾 **Fiscal safety** | Amounts, tax numbers, invoice serials, IBANs, dates and addresses are never rewritten — a wrong number on a NAV-reported document is worse than untranslated text, and a test enforces it against the real dictionary. |
+| 🧾 **Fiscal safety** | Amounts, tax numbers, invoice serials, IBANs, dates and addresses are never rewritten, because a wrong number on a NAV-reported document is worse than untranslated text, and a test enforces it against the real dictionary. |
 | 📤 **Miss export** | The popup can copy or download every string it could not translate. That is how the dictionary grows. |
 | 🔒 **Private by design** | No analytics, no servers, nothing leaves your browser. See [`PRIVACY.md`](PRIVACY.md). |
 | 🧱 **Manifest V3** | One codebase for **Chrome / Edge** and **Firefox**. |
@@ -65,7 +65,7 @@ against a production NAV-connected account and never clicks anything.
 ## 🚀 Install
 
 Everything you need is attached to the [**latest release**](../../releases/latest). Both browsers
-install for good — no developer mode, no folder to keep around, no store account.
+install for good: no developer mode, no folder to keep around, no store account.
 
 ### 🦊 Firefox / Zen
 
@@ -84,19 +84,19 @@ signed package, and a one-off policy naming its ID. Chrome applies these policie
 consumer installs, not just managed fleets.
 
 1. Download **`translator-for-billingo-policy.zip`**.
-2. Unzip it and deploy **one** of the two folders — admin rights, once per machine:
+2. Unzip it and deploy **one** of the two folders (admin rights, once per machine):
 
    | | Auto-updates | You can remove it | Also download the `.crx` |
    | --- | --- | --- | --- |
-   | **`forcelist/`** *(recommended)* — Chrome fetches and installs it for you | ✅ | ❌ | no |
-   | `allowlist/` — only unblocks the ID, you install it yourself | ❌ | ✅ | yes, drag it onto `chrome://extensions` |
+   | **`forcelist/`** *(recommended)*, Chrome fetches and installs it for you | ✅ | ❌ | no |
+   | `allowlist/`, only unblocks the ID, you install it yourself | ❌ | ✅ | yes, drag it onto `chrome://extensions` |
 
    ```bash
-   # Windows, as admin — double-click, or:
+   # Windows, as admin: double-click, or:
    reg import forcelist\windows-chrome.reg
    # Linux
    sudo cp forcelist/linux-chrome.json /etc/opt/chrome/policies/managed/
-   # macOS — install forcelist/macos-chrome.plist as a configuration profile
+   # macOS: install forcelist/macos-chrome.plist as a configuration profile
    ```
 
    Edge uses the same files with `Microsoft\Edge` in place of `Google\Chrome`.
@@ -120,7 +120,7 @@ Open [Billingo](https://app.billingo.hu), click the toolbar icon, and pick **Mag
 **English** or **Français**.
 
 The popup also shows live coverage for the current page, and lets you copy or download the strings
-it could not translate — paste that list into an issue and it becomes the next batch of
+it could not translate. Paste that list into an issue and it becomes the next batch of
 translations.
 
 ---
@@ -130,8 +130,8 @@ translations.
 ### Setup
 
 ```bash
-npm install     # jsdom, acorn, playwright — needed by the tests
-npm test        # 313 tests, node:test
+npm install     # jsdom, acorn, playwright, needed by the tests
+npm test        # 319 tests, node:test
 ```
 
 No bundler, no build step for the extension itself: `dist/` is a filtered copy.
@@ -139,7 +139,7 @@ No bundler, no build step for the extension itself: `dist/` is a filtered copy.
 ### Building locally
 
 ```bash
-npm run package        # no npm install needed — the packaging step has zero dependencies
+npm run package        # no npm install needed, the packaging step has zero dependencies
 ```
 
 | Output | Use |
@@ -149,11 +149,11 @@ npm run package        # no npm install needed — the packaging step has zero d
 | `dist/translator-for-billingo-firefox-<version>.zip` | AMO upload → Mozilla returns a signed `.xpi` |
 
 The payload is an allowlist of exactly the files needed at runtime, and the build refuses to write
-anything when it is inconsistent — a missing content script, an icon or popup asset that would 404,
+anything when it is inconsistent: a missing content script, an icon or popup asset that would 404,
 a `web_accessible_resources` pattern matching no file, an ESM `import` that would stop Chrome
 evaluating a content script, or a shard named by `dict/_index.json` and absent in one language.
 
-For a loaded-from-disk Chrome build, copy `dist/chrome/` somewhere **stable** first — Chrome reads
+For a loaded-from-disk Chrome build, copy `dist/chrome/` somewhere **stable** first, because Chrome reads
 it on every start. On Windows + WSL that means a Windows path such as
 `C:\Users\<you>\billingo-translator-extension\`; a `\\wsl.localhost\…` path breaks whenever WSL is
 not running.
@@ -162,11 +162,11 @@ not running.
 <summary>Signing the two packages by hand</summary>
 
 ```bash
-# Firefox — AMO signs it without listing it publicly ("self-distribution")
+# Firefox: AMO signs it without listing it publicly ("self-distribution")
 npx --yes web-ext@8 sign --source-dir dist/firefox --channel unlisted \
     --api-key "$AMO_JWT_ISSUER" --api-secret "$AMO_JWT_SECRET"
 
-# Chrome — our own key, which also produces updates.xml and the policy bundle
+# Chrome: our own key, which also produces updates.xml and the policy bundle
 openssl genrsa -out crx-key.pem 2048       # keep this OUT of the repo, and back it up
 npm run package:crx -- --key crx-key.pem
 ```
@@ -182,38 +182,9 @@ Run `npm run lint:ext` before submitting to AMO: Mozilla's own validator should 
 
 </details>
 
-### Releasing
-
-Pushing a `v*` tag is the whole release process.
-
-```bash
-# bump the version in BOTH manifest.json and package.json, then:
-git tag v1.0.1 && git push origin v1.0.1
-```
-
-[`.github/workflows/release.yml`](.github/workflows/release.yml) tests, builds, lints, signs the
-Firefox add-on through AMO, packs the Chrome `.crx` with its policies, optionally publishes to the
-Web Store, and attaches everything to the GitHub Release. `workflow_dispatch` runs a **dry run** by
-default — signing burns an AMO version number, and a burnt version cannot be reused.
-
-| Secret | For | Required |
-| --- | --- | --- |
-| `AMO_JWT_ISSUER`, `AMO_JWT_SECRET` | Firefox signing — [get them here](https://addons.mozilla.org/developers/addon/api/key/) | ✅ |
-| `CRX_PRIVATE_KEY` | the Chrome `.crx`, `updates.xml` and the policy bundle (PEM contents) | ❌ — the step skips itself when absent |
-| `CHROME_CLIENT_ID`, `CHROME_CLIENT_SECRET`, `CHROME_REFRESH_TOKEN`, `CHROME_EXTENSION_ID`, `CHROME_PUBLISHER_ID` | Chrome Web Store publish | ❌ — the step skips itself when absent |
-
-> [!IMPORTANT]
-> A tag push runs the workflow **from the tagged commit**, not from `main`. Tagging a commit older
-> than `release.yml` fires nothing at all — no run, no failure, no notification.
-
-Two identity fields make updates work rather than installing a second copy of the extension:
-`browser_specific_settings.gecko.id` on Firefox, and the CRX signing key on Chrome. Neither may
-change between versions. Chrome has no signing step for the Web Store — it signs on publish, and
-its API can only *update* an existing item, so that listing has to be created by hand first.
-
 ### Repository layout
 
-Two halves with **different rules** — conflating them is the easiest mistake to make here:
+Two halves with **different rules**, and conflating them is the easiest mistake to make here:
 
 | | Path | Modules | Ships |
 | --- | --- | --- | --- |
@@ -238,7 +209,7 @@ Two halves with **different rules** — conflating them is the easiest mistake t
 ### Commands
 
 ```bash
-npm test                            # the whole suite (313 tests)
+npm test                            # the whole suite (319 tests)
 npm run package                     # dist/{chrome,firefox} + one zip each, validated
 npm run package:crx -- --key <pem>  # signed .crx + updates.xml + policy bundle
 npm run lint:ext                    # Mozilla web-ext lint over dist/firefox (via npx)
@@ -251,7 +222,7 @@ node scripts/build-icons.mjs        # PNGs from icons/icon.svg; needs `npm i sha
 ### Adding translations
 
 `dict/en.json` and `dict/fr.json` are the **source of truth**. The per-zone files in `dict/en/` and
-`dict/fr/` are **generated** — editing them directly is overwritten by the next build.
+`dict/fr/` are **generated**: editing them directly is overwritten by the next build.
 
 1. Add `"<hungarian>": "<translation>"` to **both** `dict/en.json` and `dict/fr.json`. The key sets
    must stay identical, and **no value may be empty**: an empty value means "miss" and leaves
@@ -271,21 +242,21 @@ it, the next capture resurrects the same garbage.
 ### Where the strings come from
 
 `tools/` can rebuild the candidate list from the app itself. `tools/extract-bundle.js` needs a
-Netscape cookie jar for an authenticated session — only to fetch the app shell, since the Nuxt
+Netscape cookie jar for an authenticated session, used only to fetch the app shell, since the Nuxt
 chunks themselves are public. It yields Billingo's own Hungarian message catalog, the authoritative
 inventory of everything the UI can display.
 
 > [!CAUTION]
-> `app.billingo.hu` is a **production invoicing app wired to NAV**, the Hungarian tax authority —
+> `app.billingo.hu` is a **production invoicing app wired to NAV**, the Hungarian tax authority.
 > not a sandbox. Capture tooling must stay strictly **read-only**: navigate by URL, open dropdowns,
-> then Escape. Never click a commit control — no document issue, no draft save, no wizard "Tovább"
+> then Escape. Never click a commit control: no document issue, no draft save, no wizard "Tovább"
 > (it can start a real bank link), no delete or confirm.
 
 ### Testing
 
 `node:test` + `assert`. Pure logic is tested directly, DOM code under jsdom, and `src/*.js` is
 loaded through `vm` (`tests/load-script.js`) because those files have no exports. There is no lint,
-type-check or CI — the tests are the only automated safety net, so **add one for any change** to the
+type-check or CI, so the tests are the only automated safety net, so **add one for any change** to the
 walker, the translator layers, the loader, the router, the filters or the packaging.
 
 Two tests guard whole classes of defect rather than individual functions:
@@ -304,11 +275,11 @@ artifacts, so a reviewer can load a branch without building it locally.
 
 Two deliberate choices worth knowing before you touch them:
 
-- `npm ci --ignore-scripts` — playwright's postinstall downloads ~400 MB of browsers that only
+- `npm ci --ignore-scripts`, because playwright's postinstall downloads ~400 MB of browsers that only
   `tools/` uses, never the tests.
 - `npm test` globs `tests/*.test.js`, **one level**. `tests/**/*.test.js` is expanded by neither
   POSIX `sh` nor bash without `globstar`, so it reached `node` as a literal string and depended on
-  the test runner's own glob support — which varies by Node version and would have broken CI on a
+  the test runner's own glob support, which varies by Node version and would have broken CI on a
   different runner image.
 
 Architecture detail and the invariants you must not break live in [`CLAUDE.md`](CLAUDE.md).
@@ -324,7 +295,7 @@ browser's sync storage. Full details in [`PRIVACY.md`](PRIVACY.md).
 
 This project is an **independent, unofficial** tool and is **not affiliated with, sponsored by, or
 endorsed by Billingo** or its operating company. All product names, logos and trademarks are the
-property of their respective owners. Provided "as is", with no warranty — use at your own
+property of their respective owners. Provided "as is", with no warranty. Use at your own
 discretion.
 
 [MIT](LICENSE) © 2026 Alexandre Vuillerot

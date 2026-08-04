@@ -17,9 +17,8 @@
 //                              updated, and the user cannot remove it.
 //
 // Forcelist is the default recommendation here only because this repo is PUBLIC, so
-// `releases/latest/download/...` is anonymously fetchable. The sibling private repo
-// (a private sibling repo) had to use the allowlist for exactly that reason: its
-// release assets need auth, which Chrome's updater does not have.
+// `releases/latest/download/...` is anonymously fetchable. A private repo has to fall back
+// to the allowlist: its release assets require auth, which Chrome's updater does not have.
 //
 // The extension ID is DERIVED FROM THE KEY, so the key is the identity: lose it and
 // every installed copy silently stops updating, because the ID no longer matches and

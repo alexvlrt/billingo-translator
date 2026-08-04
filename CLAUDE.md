@@ -91,8 +91,8 @@ cannot be corrected in place.
   unblocks the ID, manual install, no auto-update). `policyFiles()` emits both for
   Windows/Linux/macOS with the real ID baked in — a placeholder ID fails as an extension that
   never appears, with no error anywhere. Forcelist is viable here **because this repo is
-  public**: the private `a private sibling repo` had to use the allowlist, since
-  Chrome's updater cannot authenticate to fetch a private repo's release assets.
+  public**: a private repo must fall back to the allowlist, since Chrome's updater cannot
+  authenticate to fetch a private repo's release assets.
 - The tag must equal `manifest.json`'s version. That guard exists so a mismatch fails in two
   seconds instead of surfacing as an opaque AMO rejection after a green-looking build.
 - **A tag push runs the workflow file from the tagged commit, not from `main`.** Tagging a
