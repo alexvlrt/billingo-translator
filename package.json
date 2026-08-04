@@ -7,6 +7,7 @@
   "scripts": {
     "test": "node --test --experimental-vm-modules tests/*.test.js",
     "package": "node scripts/package.mjs",
+    "package:crx": "node scripts/crx.mjs",
     "lint:ext": "npx --yes web-ext@8 lint --source-dir dist/firefox --self-hosted"
   },
   "devDependencies": {

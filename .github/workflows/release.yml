@@ -199,14 +199,43 @@ jobs:
           ' "$pub"
           echo "::notice::Submitted to the Chrome Web Store. Publication waits on Google review."
 
+      # --- Chrome, self-hosted (optional) ------------------------------------
+      # A .crx signed with our own key plus an update manifest is the only PERMANENT
+      # Chrome install that does not go through the Web Store — Chrome has refused a
+      # drag-and-dropped local .crx since v33, so the install policy on the machine is
+      # what actually places it (README has the recipe). Skips itself without the key,
+      # like the Web Store step, so a Firefox-only setup needs no configuration.
+      #
+      # The extension ID is derived from the key, so CRX_PRIVATE_KEY must never be
+      # rotated: a new key is a different extension and every installed copy stops
+      # updating, with no way to re-issue the old ID.
+      - name: Pack a self-signed CRX
+        id: crx
+        if: steps.mode.outputs.ship == 'true'
+        env:
+          CRX_PRIVATE_KEY: ${{ secrets.CRX_PRIVATE_KEY }}
+        run: |
+          set -euo pipefail
+          if [ -z "${CRX_PRIVATE_KEY:-}" ]; then
+            echo "::notice::CRX_PRIVATE_KEY not set — skipping the self-hosted .crx."
+            echo "packed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          npm run package:crx
+          echo "packed=true" >> "$GITHUB_OUTPUT"
+
       # --- Artifacts ---------------------------------------------------------
       - name: Upload build artifacts
         uses: actions/upload-artifact@v7
         with:
           name: release-${{ steps.version.outputs.value }}
+          # if-no-files-found applies to the whole set, so the .crx patterns matching
+          # nothing on a keyless run is not an error.
           path: |
             dist/*.zip
             dist/signed/*.xpi
+            dist/*.crx
+            dist/updates.xml
           if-no-files-found: error
           retention-days: 90
 
@@ -227,16 +256,28 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           VERSION: ${{ steps.version.outputs.value }}
           XPI: ${{ steps.xpi.outputs.path }}
+          CRX_PACKED: ${{ steps.crx.outputs.packed }}
         run: |
           set -euo pipefail
-          xpi="$XPI#Firefox (signed .xpi — install directly)"
-          zip="dist/translator-for-billingo-chrome-$VERSION.zip#Chrome / Edge (unpacked zip)"
+          assets=(
+            "$XPI#Firefox (signed .xpi — install directly)"
+            "dist/translator-for-billingo-chrome-$VERSION.zip#Chrome / Edge (unpacked zip)"
+          )
+          # updates.xml must keep the same URL across releases, which is why it is an
+          # asset of `latest` rather than a versioned file: the policy is written once.
+          if [ "${CRX_PACKED:-false}" = "true" ]; then
+            assets+=(
+              "dist/translator-for-billingo.crx#Chrome (self-signed .crx — needs the install policy)"
+              "dist/updates.xml#Chrome update manifest (the policy's update_url)"
+              "dist/translator-for-billingo-policy.zip#Chrome install policies (Windows / Linux / macOS)"
+            )
+          fi
           if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
             echo "::notice::Release $GITHUB_REF_NAME already exists — replacing its assets."
-            gh release upload "$GITHUB_REF_NAME" --clobber "$xpi" "$zip"
+            gh release upload "$GITHUB_REF_NAME" --clobber "${assets[@]}"
           else
             gh release create "$GITHUB_REF_NAME" \
               --title "v$VERSION" \
               --notes "Signed Firefox add-on and Chrome package for v$VERSION. See CHANGELOG.md." \
-              "$xpi" "$zip"
+              "${assets[@]}"
           fi

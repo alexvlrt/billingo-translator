@@ -23,6 +23,11 @@ tools/rendered-strings.txt
 tools/crawl-log.txt
 tools/diagnostic-output.json
 
+# CRX signing keys. The extension ID is derived from the key, so a leaked key lets
+# anyone publish an update AS this extension — and it can never be re-issued.
+*.pem
+crx-key*
+
 # Editor / OS
 .idea/
 .vscode/

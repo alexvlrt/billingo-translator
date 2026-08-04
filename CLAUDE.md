@@ -33,6 +33,8 @@ node tools/diagnose-extension.js <cookie-jar># load the extension for real, repo
 node scripts/build-icons.mjs                 # needs `npm i sharp` ad hoc; not a project dependency
 
 npm run package                              # dist/{chrome,firefox}/ + one .zip each, validated
+npm run package:crx -- --key crx-key.pem     # signed .crx + updates.xml + policy bundle
+                                             #   CI reads the key from CRX_PRIVATE_KEY instead
 npm run lint:ext                             # Mozilla's web-ext lint over dist/firefox (via npx)
 ```
 
@@ -78,8 +80,24 @@ cannot be corrected in place.
   the five `CHROME_*` secrets are absent, so a Firefox-only setup needs no configuration.
   Both the upload and the publish response are inspected, because `curl` exits 0 on an HTTP
   4xx unless told otherwise and the Web Store also reports failures inside a 200 body.
+- **Chrome, self-hosted** — `scripts/crx.mjs` signs the *already validated* Chrome zip into a
+  CRX3 with our own RSA key (`CRX_PRIVATE_KEY`, skips itself when absent) and emits
+  `updates.xml` plus a policy bundle. Hand-rolled like the ZIP writer, and verified
+  byte-for-byte against `google-chrome --pack-extension` on the same key. **The extension ID
+  is derived from the key** (first 16 bytes of SHA-256 over the DER SPKI, nibbles mapped to
+  `a`–`p`), so rotating `CRX_PRIVATE_KEY` creates a *different* extension and orphans every
+  install. Chrome needs a policy to accept a non-store ID at all: `ExtensionInstallForcelist`
+  (Chrome installs and updates it, user cannot remove) or `ExtensionInstallAllowlist` (only
+  unblocks the ID, manual install, no auto-update). `policyFiles()` emits both for
+  Windows/Linux/macOS with the real ID baked in — a placeholder ID fails as an extension that
+  never appears, with no error anywhere. Forcelist is viable here **because this repo is
+  public**: the private `a private sibling repo` had to use the allowlist, since
+  Chrome's updater cannot authenticate to fetch a private repo's release assets.
 - The tag must equal `manifest.json`'s version. That guard exists so a mismatch fails in two
   seconds instead of surfacing as an opaque AMO rejection after a green-looking build.
+- **A tag push runs the workflow file from the tagged commit, not from `main`.** Tagging a
+  commit older than `release.yml` fires nothing at all — no run, no failure, no notification.
+  This is how the first 1.0.0 release produced no artifacts.
 
 The build steps are duplicated between `ci.yml` and `release.yml` rather than shared through
 `workflow_call`: the release job needs the artifacts in its own workspace to sign them, and

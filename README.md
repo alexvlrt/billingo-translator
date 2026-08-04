@@ -84,6 +84,43 @@ evaluating a content script, or a shard named by `dict/_index.json` and absent i
 To update: replace the folder contents and click **Reload**.
 
 <details>
+<summary>Permanent install without the Web Store (signed <code>.crx</code> + policy)</summary>
+
+Developer mode nags on every start and an unpacked folder has to be reloaded by hand. The
+alternative is the `.crx` attached to each [release](../../releases/latest) — signed with the
+project's own key, so its extension ID is stable — plus a one-off policy that tells Chrome to
+accept that ID. Chrome honours these policies on ordinary consumer installs, not just managed
+fleets.
+
+Download `translator-for-billingo-policy.zip` from the release and pick **one** folder:
+
+| Folder | What Chrome does | Auto-update | Removable |
+| --- | --- | --- | --- |
+| `forcelist/` | installs it itself from `updates.xml` | ✅ | ❌ |
+| `allowlist/` | only unblocks the ID; you drop the `.crx` in yourself | ❌ | ✅ |
+
+```bash
+# Windows (admin):  double-click forcelist\windows-chrome.reg
+sudo cp forcelist/linux-chrome.json /etc/opt/chrome/policies/managed/   # Linux
+```
+
+Restart the browser and confirm the policy appears in `chrome://policy` — if it is not listed,
+nothing else will work. For Edge, swap `Google\Chrome` for `Microsoft\Edge` in the registry path.
+
+Building it locally needs the signing key, which is **not** in the repo:
+
+```bash
+openssl genrsa -out crx-key.pem 2048      # keep this OUT of the repo, and back it up
+npm run package && npm run package:crx -- --key crx-key.pem
+```
+
+> [!WARNING]
+> The extension ID is derived from that key. Losing it or rotating it makes a *different*
+> extension: every installed copy stops updating, and the old ID can never be re-issued.
+
+</details>
+
+<details>
 <summary>Via the Chrome Web Store instead</summary>
 
 Upload `dist/translator-for-billingo-chrome-1.0.0.zip` to the
@@ -151,6 +188,7 @@ AMO version number, and a burnt version cannot be reused.
 | --- | --- | --- |
 | `AMO_JWT_ISSUER`, `AMO_JWT_SECRET` | Firefox signing — [get them here](https://addons.mozilla.org/developers/addon/api/key/) | ✅ |
 | `CHROME_CLIENT_ID`, `CHROME_CLIENT_SECRET`, `CHROME_REFRESH_TOKEN`, `CHROME_EXTENSION_ID`, `CHROME_PUBLISHER_ID` | Chrome Web Store publish | ❌ — the step skips itself when absent |
+| `CRX_PRIVATE_KEY` | the self-signed `.crx`, its `updates.xml` and the policy bundle (PEM contents, `openssl genrsa 2048`) | ❌ — the step skips itself when absent |
 
 > [!NOTE]
 > Chrome has **no signing step**: the Web Store signs on publish, and its API can only *update* an
