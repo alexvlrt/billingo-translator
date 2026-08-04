@@ -21,6 +21,23 @@ Curated notes for non-obvious translation choices in `dict/en.json` and `dict/fr
 - 2026-04-29 — `Visszavonás` → EN `Cancel / Revoke`, FR `Annuler / Révoquer`. The verb is used in two distinct UI contexts: revoking an API key or invitation (→ Revoke) and cancelling an action (→ Cancel). Both glosses given with slash notation since the key appears in different widgets.
   **Superseded on 2026-08-03** — see the slash-gloss entry below; `Visszavonás` is now `Revoke` / `Révoquer`.
 
+- 2026-08-04 — **Counted units are covered by placeholder keys, not by enumeration.** `28 nap`
+  rendered untranslated on screen while `28 nap múlva` was fine, because the dictionary held
+  `:due_days nap múlva` — which the pattern layer generalises to any number — and nothing for the
+  bare noun. Eight placeholder keys close the families for every value: `:days nap`, `:days napos`,
+  `:days napon belül`, `:days napra`, `:days munkanap`, `:years év`, `:hours óra`,
+  `:count karakter`. Hungarian does not pluralise after a numeral and EN/FR do, so `1 nap`,
+  `1 hónap`, `1 év`, `1 óra`, `1 munkanap` and `1 karakter` are also added as exact keys — layer 1
+  runs before the pattern layer, so the exact singular wins over `:days days`.
+  Deliberately **not** added: `Ft`, `TESZOR`, `jegyű`, `sorszámú`, `millió` and ~95 other tokens the
+  automatic scan proposed. Most are not counted units at all (it also proposed `vagy`, `Budapest`
+  and `adhatsz`, words that merely followed a number inside a sentence), and the rest are fiscal or
+  structural terms where a guessed translation would read as confident and be wrong.
+- 2026-08-04 — **`:month hónap` was singular and competed with `:months hónap`.** Both keys exist in
+  Billingo's catalog and compile to the same pattern shape, so which one won was arbitrary and
+  `2 hónap` came out as `2 month`. The EN value of `:month hónap` is now `:month months`; the exact
+  `1 hónap` handles the singular. French needed no change — `mois` is invariable.
+
 - 2026-08-03 — **Slash glosses removed from 17 values.** A value of the form `A / B` on a key that contains no slash was a translator's aid, not UI text: a sortable table header reading `Performance / Delivery` is unreadable, and the new separator-splitting lookup layer compounded it (`Teljesítés / Kelt` came out as `Performance / Delivery / Issued`). One term was chosen per key from Billingo's own usage: `Teljesítés` → `Completion` / `Exécution` (consistent with the shipped `Teljesítés dátuma` → `Completion date` / `Date d'exécution`); `Fiók` → `Account` / `Compte` (a bank branch is `bankfiók`, never bare `fiók`); `Megnevezés` → `Description` / `Libellé` (it is the invoice line-item name column); `Megrendelő` → `Customer` / `Client`; `Árukészlet` → `Inventory`; `Visszavonás` → `Revoke` / `Révoquer`; `Érvénytelenítés` → `Invalidation`; `Eszköz` → `Device` / `Appareil`; `Találat` → `Result`; `Teendő` → `Task`; `Település` → `City` / `Ville`; `Tisztség` → `Position` / `Fonction`; `Pályázat` → `Tender`; plus the public-area types `forduló`, `korzó`, `menedékház`, `pálya`. Keys that genuinely contain a slash (`Adószám / EU adószám`) keep it — that is the source text, not a gloss.
 
 - 2026-08-03 — **Weekday abbreviations were wrong and are now fixed against Billingo's own i18n catalog.** The bundle's `Common.form.Label:{monday…sunday}` gives the authoritative mapping. The dictionary had `Hé` → `Hey` / `Salut` (it is *hétfő*, Monday) and `Ke` → `Wed` / `Mer` (it is *kedd*, **Tuesday**). A shifted date-picker header row is not cosmetic: a user setting a `teljesítés dátuma` or `fizetési határidő` "on Wednesday" was clicking Tuesday, on a document reported to NAV. Now `Hé`→`Mon`/`Lun`, `Ke`→`Tue`/`Mar`, `Cs`→`Thu`/`Jeu`, `Pé`→`Fri`/`Ven`, plus the missing `Sze`→`Wed`/`Mer`, `Sz`→`Sat`/`Sam`, `Va`→`Sun`/`Dim`. Note `Sz` is Saturday and `Sze` is Wednesday — easy to swap.
