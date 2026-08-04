@@ -9,7 +9,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-4F46E5.svg)](LICENSE)
 [![Version](https://img.shields.io/badge/version-1.0.1-4F46E5.svg)](CHANGELOG.md)
 [![Manifest V3](https://img.shields.io/badge/Manifest-V3-4F46E5.svg)](manifest.json)
-[![Coverage 97.8%](https://img.shields.io/badge/coverage-97.8%25-4F46E5.svg)](CHANGELOG.md)
+[![Coverage 99.7%](https://img.shields.io/badge/coverage-99.7%25%20on%20screen-4F46E5.svg)](#-why)
 [![Chrome + Firefox](https://img.shields.io/badge/Chrome%20%2B%20Firefox-supported-4F46E5.svg)](#-install)
 
 [Install](#-install) · [Usage](#-usage) · [Development](#-development) · [Privacy](#-privacy) · [Changelog](CHANGELOG.md)
@@ -28,9 +28,25 @@ non-Hungarian-speaking founder, accountant or freelancer who has to use it, ever
 guessing game. This extension overlays a **hand-curated English or French translation** on the live
 UI so you can read what you are clicking.
 
-Coverage is measured, not claimed: **97.8 %** of the text Billingo actually renders, checked against
-the app's own Hungarian message catalog. [`CHANGELOG.md`](CHANGELOG.md) explains how that number is
-obtained and what the remaining 2 % is.
+Coverage is measured, not claimed — and measured two ways, because they answer different questions:
+
+| | Result | What it means |
+| --- | --- | --- |
+| **On screen** | **99.7 %** | 2,304 strings rendered across 25 authenticated pages, with the extension actually loaded. 6 were left in Hungarian. |
+| **Against the catalog** | **99.96 %** | 7,300 of the 7,303 reachable Hungarian strings mined from Billingo's own Nuxt bundle. |
+
+The on-screen figure is the honest one, and the harder of the two: the catalog holds *templates*,
+the DOM renders *instances*. `28 nap` appears on screen but exists nowhere in the catalog — Vue
+composes it at render time from a number and a word — so catalog coverage is blind to it.
+
+Of those 6 remaining strings, **3 have since been added** and 3 are deliberately left alone: they
+are a partner company's name on real bank transactions. Rewriting user data would corrupt your
+accounts, which is worse than leaving a word in Hungarian.
+
+Both numbers are reproducible: `node tools/diagnose-extension.js <cookie-jar> <routes>` loads the
+extension into a real browser and reports what is still Hungarian. Neither number covers modals,
+validation errors or toasts, which need a click to appear — the crawler stays strictly read-only
+against a production NAV-connected account and never clicks anything.
 
 ## ✨ Features
 
