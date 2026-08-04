@@ -5,6 +5,10 @@ name: Release
 # Normal use: push a tag that matches the manifest version.
 #     git tag v1.0.0 && git push origin v1.0.0
 #
+# For a tag push GitHub reads this file FROM THE TAGGED COMMIT, not from main. A tag
+# placed on a commit older than this workflow therefore fires nothing at all — no run,
+# no failure, no notification. Tag a commit that contains this file.
+#
 # `workflow_dispatch` defaults to a DRY RUN: it tests, builds and lints without
 # touching a store. Use it to validate the pipeline — signing burns a version number
 # on AMO, and a burnt version cannot be reused.
@@ -213,15 +217,26 @@ jobs:
         run: |
           echo "::notice::Signed and published, but no GitHub Release was created — that needs a v* tag push."
 
-      - name: Create the GitHub Release
+      # `gh release create` fails when the tag already carries a release — and by this
+      # point AMO has signed, burning the version number, so a late error here would
+      # strand the only artifacts that cannot be rebuilt. Upload into the existing
+      # release instead; hand-written notes are kept, only the assets are replaced.
+      - name: Publish the GitHub Release
         if: steps.mode.outputs.ship == 'true' && github.event_name == 'push'
         env:
           GH_TOKEN: ${{ github.token }}
           VERSION: ${{ steps.version.outputs.value }}
           XPI: ${{ steps.xpi.outputs.path }}
         run: |
-          gh release create "$GITHUB_REF_NAME" \
-            --title "v$VERSION" \
-            --notes "Signed Firefox add-on and Chrome package for v$VERSION. See CHANGELOG.md." \
-            "$XPI#Firefox (signed .xpi — install directly)" \
-            "dist/translator-for-billingo-chrome-$VERSION.zip#Chrome / Edge (unpacked zip)"
+          set -euo pipefail
+          xpi="$XPI#Firefox (signed .xpi — install directly)"
+          zip="dist/translator-for-billingo-chrome-$VERSION.zip#Chrome / Edge (unpacked zip)"
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            echo "::notice::Release $GITHUB_REF_NAME already exists — replacing its assets."
+            gh release upload "$GITHUB_REF_NAME" --clobber "$xpi" "$zip"
+          else
+            gh release create "$GITHUB_REF_NAME" \
+              --title "v$VERSION" \
+              --notes "Signed Firefox add-on and Chrome package for v$VERSION. See CHANGELOG.md." \
+              "$xpi" "$zip"
+          fi
