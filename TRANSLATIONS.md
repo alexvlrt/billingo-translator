@@ -63,9 +63,8 @@ Curated notes for non-obvious translation choices in `dict/en.json` and `dict/fr
   dictionary already covers, worded to match the shipped `Lejárt számlák` → `Expired invoices`
   rather than the more natural "overdue" — and `Céginfo, Partnerfigyelő`, a composite whose two
   halves were already translated separately but which the separator layer does not split on a
-  comma. The other three (`Példa Tanácsadó Kft.`, `To Példa Tanácsadó Kft.`, `Fee for To
-  Példa Tanácsadó Kft.`) are a real partner's name on real bank transactions: user data, left
-  alone deliberately. They are the visible edge of the layer 7/8 hazard already documented in
+  comma. The other three were one partner company's name, appearing bare and inside two bank
+  transaction labels: account data, left alone deliberately. They are the visible edge of the layer 7/8 hazard already documented in
   CLAUDE.md — a dictionary that reached into them would rewrite the accounts.
 - 2026-08-04 — **Two more counted composites, found by sweeping the live DOM.** `0 db kimenő
   számla` and `Utolsó szinkron (1/4):` were the only Hungarian left across 13 authenticated
